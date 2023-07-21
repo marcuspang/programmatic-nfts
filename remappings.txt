@@ -6,3 +6,4 @@ forge-std/=lib/contracts/lib/forge-std/src/
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 @openzeppelin/=lib/openzeppelin-contracts/
 erc6551/=lib/reference/src/
+solady/=lib/solady/

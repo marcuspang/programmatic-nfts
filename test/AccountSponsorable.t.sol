@@ -2,16 +2,15 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
 
 import {Strings} from "openzeppelin-contracts/utils/Strings.sol";
 import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-
 import {AccountProxy} from "tokenbound/AccountProxy.sol";
 import {AccountGuardian} from "tokenbound/AccountGuardian.sol";
 import {ERC6551Registry} from "erc6551/ERC6551Registry.sol";
-import "../src/AccountSponsorable.sol";
+
+import {AccountSponsorable, InvalidBlockNumbers} from "../src/AccountSponsorable.sol";
 import {ITransformer} from "../src/interfaces/ITransformer.sol";
 
 import {MockTransformer} from "./mock/MockTransformer.sol";

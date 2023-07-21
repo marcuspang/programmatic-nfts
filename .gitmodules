@@ -7,3 +7,6 @@
 [submodule "lib/reference"]
 	path = lib/reference
 	url = https://github.com/erc6551/reference
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/vectorized/solady

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {ITransformer} from "../../src/interfaces/ITransformer.sol";
 import {Strings} from "openzeppelin-contracts/utils/Strings.sol";
+import {ITransformer} from "../../src/interfaces/ITransformer.sol";
 
 contract MockCounterTransformer is ITransformer {
     using Strings for uint256;
