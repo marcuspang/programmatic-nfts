@@ -1,3 +1,5 @@
+import { chainRpcPrefix } from "@/constants/chainRpcPrefix";
+import { txServiceUrl } from "@/constants/txServiceUrl";
 import {
   AuthKitSignInData,
   Web3AuthEventListener,
@@ -54,6 +56,11 @@ const openloginAdapter = new OpenloginAdapter({
   },
 });
 
+// TODO: setup with other EVM chains
+const CURRENT_CHAIN: "polygon" | "eth" = "polygon";
+
+const isTestnet = process.env.NODE_ENV === "development";
+
 export function Wallet() {
   const [web3AuthModalPack, setWeb3AuthModalPack] =
     useState<Web3AuthModalPack>();
@@ -68,13 +75,13 @@ export function Wallet() {
     (async () => {
       const options: Web3AuthOptions = {
         clientId: process.env.WEB3AUTH_CLIENT_ID!,
-        web3AuthNetwork:
-          process.env.NODE_ENV === "development" ? "testnet" : "mainnet",
+        web3AuthNetwork: isTestnet ? "testnet" : "mainnet",
         chainConfig: {
           chainNamespace: CHAIN_NAMESPACES.EIP155,
           chainId: "0x1",
-          rpcTarget: `https://polygon-mumbai.infura.io/v3/${process.env
-            .INFURA_KEY!}`,
+          rpcTarget: `${
+            chainRpcPrefix[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN]
+          }${process.env.INFURA_KEY!}`,
         },
         uiConfig: {
           theme: theme === "dark" || theme === "light" ? theme : "dark",
@@ -83,7 +90,8 @@ export function Wallet() {
       };
 
       const newWeb3AuthModalPack = new Web3AuthModalPack({
-        txServiceUrl: "https://safe-transaction-polygon.safe.global",
+        txServiceUrl:
+          txServiceUrl[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN],
       });
 
       await newWeb3AuthModalPack.init({
@@ -157,8 +165,12 @@ export function Wallet() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="px-2">
-          <DropdownMenuLabel className="whitespace-prewrap">
-            {safeAuthSignInResponse?.eoa || userInfo?.name || userInfo?.email}
+          <DropdownMenuLabel>
+            <span className="font-normal">Chain: {CURRENT_CHAIN.toUpperCase()}</span>{" "}
+            <br />
+            <span className="font-mono">
+              {safeAuthSignInResponse?.eoa || userInfo?.name || userInfo?.email}
+            </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout}>
