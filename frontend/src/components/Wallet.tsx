@@ -26,7 +26,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useAccount, useConnect } from "wagmi";
+import {
+  Address,
+  useAccount,
+  useConnect,
+  useEnsAddress,
+  useEnsName,
+} from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
 import { chainIds } from "@/constants/chainIds";
 
@@ -34,6 +40,11 @@ const connectedHandler: Web3AuthEventListener = (data) =>
   console.log("CONNECTED", data);
 const disconnectedHandler: Web3AuthEventListener = (data) =>
   console.log("DISCONNECTED", data);
+
+// TODO: setup with other EVM chains
+const CURRENT_CHAIN: "polygon" | "eth" = "polygon";
+
+const isTestnet = process.env.NODE_ENV === "development";
 
 const modalConfig = {
   [WALLET_ADAPTERS.TORUS_EVM]: {
@@ -59,10 +70,27 @@ const openloginAdapter = new OpenloginAdapter({
   },
 });
 
-// TODO: setup with other EVM chains
-const CURRENT_CHAIN: "polygon" | "eth" = "polygon";
+function generateConfig(theme?: string): Web3AuthOptions {
+  return {
+    clientId: process.env.WEB3AUTH_CLIENT_ID!,
+    web3AuthNetwork: isTestnet ? "testnet" : "mainnet",
+    chainConfig: {
+      chainNamespace: CHAIN_NAMESPACES.EIP155,
+      chainId: chainIds[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN],
+      rpcTarget: `${
+        chainRpcPrefix[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN]
+      }${CURRENT_CHAIN !== "polygon" ? process.env.INFURA_KEY! : ""}`,
+    },
+    uiConfig: {
+      theme: theme === "dark" || theme === "light" ? theme : "dark",
+      loginMethodsOrder: ["google", "facebook", "email_passwordless"],
+    },
+  };
+}
 
-const isTestnet = process.env.NODE_ENV === "development";
+const newWeb3AuthModalPack = new Web3AuthModalPack({
+  txServiceUrl: txServiceUrl[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN],
+});
 
 export function Wallet() {
   const [web3AuthModalPack, setWeb3AuthModalPack] =
@@ -74,61 +102,46 @@ export function Wallet() {
     null
   );
   const { theme } = useTheme();
-  const { connect } = useConnect({
+  const { connect, reset } = useConnect({
     connector: new InjectedConnector(),
   });
+  const { data } = useEnsName({
+    address: safeAuthSignInResponse?.eoa as Address | undefined,
+  });
+
   useEffect(() => {
-    (async () => {
-      const options: Web3AuthOptions = {
-        clientId: process.env.WEB3AUTH_CLIENT_ID!,
-        web3AuthNetwork: isTestnet ? "testnet" : "mainnet",
-        chainConfig: {
-          chainNamespace: CHAIN_NAMESPACES.EIP155,
-          chainId: chainIds[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN],
-          rpcTarget: `${
-            chainRpcPrefix[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN]
-          }${CURRENT_CHAIN !== "polygon" ? process.env.INFURA_KEY! : ""}`,
-        },
-        uiConfig: {
-          theme: theme === "dark" || theme === "light" ? theme : "dark",
-          loginMethodsOrder: ["google", "facebook", "email_passwordless"],
-        },
-      };
+    const options = generateConfig(theme);
 
-      const newWeb3AuthModalPack = new Web3AuthModalPack({
-        txServiceUrl:
-          txServiceUrl[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN],
-      });
-
-      await newWeb3AuthModalPack.init({
+    newWeb3AuthModalPack
+      .init({
         options,
         adapters: [openloginAdapter],
         modalConfig,
-      });
-
-      newWeb3AuthModalPack.subscribe(
-        ADAPTER_EVENTS.CONNECTED,
-        connectedHandler
-      );
-
-      newWeb3AuthModalPack.subscribe(
-        ADAPTER_EVENTS.DISCONNECTED,
-        disconnectedHandler
-      );
-
-      setWeb3AuthModalPack(newWeb3AuthModalPack);
-
-      return () => {
-        newWeb3AuthModalPack.unsubscribe(
+      })
+      .then(() => {
+        newWeb3AuthModalPack.subscribe(
           ADAPTER_EVENTS.CONNECTED,
           connectedHandler
         );
-        newWeb3AuthModalPack.unsubscribe(
+
+        newWeb3AuthModalPack.subscribe(
           ADAPTER_EVENTS.DISCONNECTED,
           disconnectedHandler
         );
-      };
-    })();
+
+        setWeb3AuthModalPack(newWeb3AuthModalPack);
+      });
+
+    return () => {
+      newWeb3AuthModalPack.unsubscribe(
+        ADAPTER_EVENTS.CONNECTED,
+        connectedHandler
+      );
+      newWeb3AuthModalPack.unsubscribe(
+        ADAPTER_EVENTS.DISCONNECTED,
+        disconnectedHandler
+      );
+    };
   }, []);
 
   useEffect(() => {
@@ -156,6 +169,7 @@ export function Wallet() {
     if (!web3AuthModalPack) return;
 
     await web3AuthModalPack.signOut();
+    reset();
 
     setProvider(null);
     setSafeAuthSignInResponse(null);
@@ -166,9 +180,7 @@ export function Wallet() {
       <DropdownMenu>
         <DropdownMenuTrigger>
           <Button>
-            {safeAuthSignInResponse?.eoa.slice(0, 10) + "..." ||
-              userInfo?.name ||
-              userInfo?.email}
+            {data?.slice(0, 10) + "..." || userInfo?.name || userInfo?.email}
             <ChevronDown />
           </Button>
         </DropdownMenuTrigger>
@@ -179,7 +191,7 @@ export function Wallet() {
             </span>{" "}
             <br />
             <span className="font-mono">
-              {safeAuthSignInResponse?.eoa || userInfo?.name || userInfo?.email}
+              {data || userInfo?.name || userInfo?.email}
             </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
