@@ -6,7 +6,10 @@ import "forge-std/console.sol";
 
 import {Strings} from "openzeppelin-contracts/utils/Strings.sol";
 import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
+import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 
+import {AccountProxy} from "contracts/AccountProxy.sol";
+import {AccountGuardian} from "contracts/AccountGuardian.sol";
 import {ERC6551Registry} from "erc6551/ERC6551Registry.sol";
 import "../src/AccountSponsorable.sol";
 import {ITransformer} from "../src/interfaces/ITransformer.sol";
@@ -17,10 +20,13 @@ import {MockERC721} from "./mock/MockERC721.sol";
 
 // solhint-disable func-name-mixedcase
 contract AccountSponsorableTest is Test {
+    using Strings for uint256;
+
     AccountSponsorable public implementation;
     ERC6551Registry public registry;
     AccountGuardian public guardian;
     AccountProxy public proxy;
+    IEntryPoint public entryPoint;
 
     MockERC721 public tokenCollection;
     MockTransformer public mockTransformer;

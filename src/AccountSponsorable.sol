@@ -166,7 +166,7 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
         override
         returns (string memory modifiedTokenURI)
     {
-        (address tokenCollection, uint256 tokenId) = token();
+        (, address tokenCollection, uint256 tokenId) = this.token();
 
         modifiedTokenURI = ERC721(tokenCollection).tokenURI(tokenId);
         for (uint256 i = 0; i < sponsorships.length; i++) {
