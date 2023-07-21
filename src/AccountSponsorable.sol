@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "contracts/Account.sol";
+import {Account, NotAuthorized} from "contracts/Account.sol";
 
 import {ERC721} from "openzeppelin-contracts/token/ERC721/ERC721.sol";
 
@@ -24,7 +24,7 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
         uint256 endBlock;
         // indicates swhether TBA owner has approved this sponsorship
         bool isApproved;
-        // indicates whether the sponsor has enabled this sponsorship, this bool is used to avoid removing elements in the sponsorships array
+        // indicates whether the sponsor has enabled this sponsorship
         bool isActive;
         uint256 fee;
         address sponsor;
