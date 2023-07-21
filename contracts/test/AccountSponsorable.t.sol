@@ -63,6 +63,8 @@ contract AccountSponsorableTest is Test {
         AccountSponsorable account = AccountSponsorable(
             payable(accountAddress)
         );
+        vm.prank(user);
+        account.setIsSponsorable(true);
 
         // Act
         vm.deal(user, 1 ether);
@@ -107,6 +109,8 @@ contract AccountSponsorableTest is Test {
         AccountSponsorable account = AccountSponsorable(
             payable(accountAddress)
         );
+        vm.prank(user);
+        account.setIsSponsorable(true);
 
         // Act & Assert
         // should fail if user tries to use an end block that is too early
@@ -145,6 +149,8 @@ contract AccountSponsorableTest is Test {
         AccountSponsorable account = AccountSponsorable(
             payable(accountAddress)
         );
+        vm.prank(user);
+        account.setIsSponsorable(true);
 
         vm.deal(user, 1 ether);
 

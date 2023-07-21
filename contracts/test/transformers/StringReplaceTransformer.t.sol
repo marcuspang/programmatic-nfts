@@ -63,6 +63,8 @@ contract StringReplaceTransformerTest is Test {
         AccountSponsorable account = AccountSponsorable(
             payable(accountAddress)
         );
+        vm.prank(user);
+        account.setIsSponsorable(true);
 
         // Act
         ITransformer transformer = new StringReplaceTransformer(

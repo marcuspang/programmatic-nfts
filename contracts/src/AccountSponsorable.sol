@@ -15,6 +15,7 @@ error NotActive();
 error InvalidBlockNumbers();
 error FailToTransferFee();
 error SponsorshipFeeTooLow();
+error NotSponsorable();
 
 contract AccountSponsorable is Account, IERC6551AccountMetadata {
     // TODO: optimise ordering to minimise struct size
@@ -31,6 +32,8 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
     }
 
     Sponsorship[] public sponsorships;
+
+    bool public isSponsorable;
 
     event AddSponsorship(
         uint256 indexed sponsorshipId,
@@ -52,9 +55,19 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
         return sponsorships;
     }
 
+    function setIsSponsorable(bool _isSponsorable) external {
+        if (!this.isAuthorized(msg.sender)) {
+            revert NotAuthorized();
+        }
+        isSponsorable = _isSponsorable;
+    }
+
     /// @notice Approves sponsorship and collect sponsorship fee.
     /// @dev Must only be called by Account owner.
     function approveSponsorship(uint256 sponsorshipId) external {
+        if (!isSponsorable) {
+            revert NotSponsorable();
+        }
         if (!this.isAuthorized(msg.sender)) {
             revert NotAuthorized();
         }
@@ -81,6 +94,9 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
     /// @notice Disapproves sponsorship and return sponsorship fee back to contract.
     /// @dev Must only be called by Account owner.
     function disapproveSponsorship(uint256 sponsorshipId) external payable {
+        if (!isSponsorable) {
+            revert NotSponsorable();
+        }
         if (!this.isAuthorized(msg.sender)) {
             revert NotAuthorized();
         }
@@ -131,11 +147,15 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
     }
 
     /// @notice Creates a new sponsorship entry, which is active by default.
+    /// @dev Can be called by any potential sponsor.
     function addSponsorship(
         uint256 startBlock,
         uint256 endBlock,
         address transformerAddress
     ) external payable returns (uint256 sponsorshipId) {
+        if (!isSponsorable) {
+            revert NotSponsorable();
+        }
         if (startBlock >= endBlock || endBlock <= block.number) {
             revert InvalidBlockNumbers();
         }
@@ -169,6 +189,9 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
         (, address tokenCollection, uint256 tokenId) = this.token();
 
         modifiedTokenURI = ERC721(tokenCollection).tokenURI(tokenId);
+        if (!isSponsorable) {
+            return modifiedTokenURI;
+        }
         for (uint256 i = 0; i < sponsorships.length; i++) {
             Sponsorship memory sponsorship = sponsorships[i];
             if (_shouldApplySponsorship(sponsorship)) {
