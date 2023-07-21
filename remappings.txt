@@ -1,5 +1,5 @@
 account-abstraction/=lib/contracts/lib/account-abstraction/contracts/
-contracts/=lib/contracts/src/
+tokenbound/=lib/contracts/src/
 ds-test/=lib/contracts/lib/forge-std/lib/ds-test/src/
 erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/
 forge-std/=lib/contracts/lib/forge-std/src/

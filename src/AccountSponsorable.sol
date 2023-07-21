@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {Account, NotAuthorized} from "contracts/Account.sol";
+import {Account, NotAuthorized} from "tokenbound/Account.sol";
 
 import {ERC721} from "openzeppelin-contracts/token/ERC721/ERC721.sol";
 
