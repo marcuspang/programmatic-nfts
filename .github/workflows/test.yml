@@ -24,12 +24,14 @@ jobs:
 
       - name: Run Forge build
         run: |
+          cd contracts
           forge --version
           forge build --sizes
         id: build
 
       - name: Run Forge tests
         run: |
+          cd contracts
           forge test -vvv --no-match-test testCannotOverflowContext
           forge test -vvv --match-test testCannotOverflowContext --code-size-limit 24576
         id: test
