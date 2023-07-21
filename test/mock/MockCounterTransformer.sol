@@ -13,7 +13,9 @@ contract MockCounterTransformer is ITransformer {
         counter = _counter;
     }
 
-    function transform(string memory tokenURI) external view override returns (string memory) {
+    function transform(
+        string memory tokenURI
+    ) external view override returns (string memory) {
         return string(abi.encodePacked(tokenURI, counter.toString()));
     }
 }

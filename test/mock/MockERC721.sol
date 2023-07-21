@@ -10,7 +10,9 @@ contract MockERC721 is ERC721 {
         _safeMint(to, tokenId);
     }
 
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         return string(abi.encodePacked(tokenId));
     }
 }
