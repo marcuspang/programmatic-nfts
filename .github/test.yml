@@ -1,6 +1,6 @@
 name: test
 
-on: [pull_request]
+on: [commit]
 
 env:
   FOUNDRY_PROFILE: ci
