@@ -26,6 +26,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { useAccount, useConnect } from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
+import { chainIds } from "@/constants/chainIds";
 
 const connectedHandler: Web3AuthEventListener = (data) =>
   console.log("CONNECTED", data);
@@ -71,6 +74,9 @@ export function Wallet() {
     null
   );
   const { theme } = useTheme();
+  const { connect } = useConnect({
+    connector: new InjectedConnector(),
+  });
   useEffect(() => {
     (async () => {
       const options: Web3AuthOptions = {
@@ -78,10 +84,10 @@ export function Wallet() {
         web3AuthNetwork: isTestnet ? "testnet" : "mainnet",
         chainConfig: {
           chainNamespace: CHAIN_NAMESPACES.EIP155,
-          chainId: "0x1",
+          chainId: chainIds[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN],
           rpcTarget: `${
             chainRpcPrefix[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN]
-          }${process.env.INFURA_KEY!}`,
+          }${CURRENT_CHAIN !== "polygon" ? process.env.INFURA_KEY! : ""}`,
         },
         uiConfig: {
           theme: theme === "dark" || theme === "light" ? theme : "dark",
@@ -139,6 +145,8 @@ export function Wallet() {
     const signInInfo = await web3AuthModalPack.signIn();
     const userInfo = await web3AuthModalPack.getUserInfo();
 
+    connect({});
+
     setSafeAuthSignInResponse(signInInfo);
     setUserInfo(userInfo || undefined);
     setProvider(web3AuthModalPack.getProvider() as SafeEventEmitterProvider);
@@ -166,7 +174,9 @@ export function Wallet() {
         </DropdownMenuTrigger>
         <DropdownMenuContent className="px-2">
           <DropdownMenuLabel>
-            <span className="font-normal">Chain: {CURRENT_CHAIN.toUpperCase()}</span>{" "}
+            <span className="font-normal">
+              Chain: {CURRENT_CHAIN.toUpperCase()}
+            </span>{" "}
             <br />
             <span className="font-mono">
               {safeAuthSignInResponse?.eoa || userInfo?.name || userInfo?.email}
