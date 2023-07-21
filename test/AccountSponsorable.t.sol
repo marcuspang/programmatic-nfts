@@ -8,7 +8,7 @@ import {Strings} from "openzeppelin-contracts/utils/Strings.sol";
 import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
 
 import {ERC6551Registry} from "erc6551/ERC6551Registry.sol";
-import {AccountSponsorable} from "../src/AccountSponsorable.sol";
+import "../src/AccountSponsorable.sol";
 import {ITransformer} from "../src/interfaces/ITransformer.sol";
 
 import {MockTransformer} from "./mock/MockTransformer.sol";
@@ -28,7 +28,10 @@ contract AccountSponsorableTest is Test {
     function setUp() public {
         entryPoint = new EntryPoint();
         guardian = new AccountGuardian();
-        implementation = new AccountSponsorable(address(guardian), address(entryPoint));
+        implementation = new AccountSponsorable(
+            address(guardian),
+            address(entryPoint)
+        );
         proxy = new AccountProxy(address(implementation));
 
         registry = new ERC6551Registry();
@@ -103,13 +106,13 @@ contract AccountSponsorableTest is Test {
         // Act & Assert
         // should fail if user tries to use an end block that is too early
         vm.prank(user);
-        vm.expectRevert(AccountSponsorable.InvalidBlockNumbers.selector);
+        vm.expectRevert(InvalidBlockNumbers.selector);
         account.addSponsorship(0, block.number, address(mockTransformer));
 
         // Act & Assert
         // should fail is user tries to use a start block greater than end block
         vm.prank(user);
-        vm.expectRevert(AccountSponsorable.InvalidBlockNumbers.selector);
+        vm.expectRevert(InvalidBlockNumbers.selector);
         account.addSponsorship(
             block.number + 2,
             block.number + 1,

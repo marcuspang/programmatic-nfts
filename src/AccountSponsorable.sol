@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {Account} from "contracts/Account.sol";
+import "contracts/Account.sol";
 
 import {ERC721} from "openzeppelin-contracts/token/ERC721/ERC721.sol";
 
 import {IERC6551AccountMetadata} from "./interfaces/IERC6551AccountMetadata.sol";
 import {ITransformer} from "./interfaces/ITransformer.sol";
 
-contract AccountSponsorable is Account, IERC6551AccountMetadata {
-    error ExceedsSponsorshipsLength();
-    error NotApproved();
-    error AlreadyApproved();
-    error NotActive();
-    error InvalidBlockNumbers();
-    error FailToTransferFee();
-    error SponsorshipFeeTooLow();
+error ExceedsSponsorshipsLength();
+error NotApproved();
+error AlreadyApproved();
+error NotActive();
+error InvalidBlockNumbers();
+error FailToTransferFee();
+error SponsorshipFeeTooLow();
 
+contract AccountSponsorable is Account, IERC6551AccountMetadata {
     // TODO: optimise ordering to minimise struct size
     struct Sponsorship {
         address transformerAddress;
