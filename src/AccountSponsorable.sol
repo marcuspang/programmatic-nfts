@@ -44,8 +44,9 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
     event DeactivateSponsorship(uint256 indexed sponsorshipId);
 
     constructor(
-        address _crossChainExecutorList
-    ) Account(_crossChainExecutorList) {}
+        address _guardian,
+        address entryPoint_
+    ) Account(_guardian, entryPoint_) {}
 
     function getSponsorships() external view returns (Sponsorship[] memory) {
         return sponsorships;
