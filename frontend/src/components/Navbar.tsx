@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
+import { Wallet } from "./Wallet";
 
 const links = [
   {
@@ -26,13 +27,12 @@ export function Navbar() {
   return (
     <nav className="border-b border-gray-200">
       <div className="container flex flex-wrap items-center justify-between mx-auto p-4">
-        <Link href="/" className="flex items-center">
-          <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-            pNFT
-          </span>
-        </Link>
-
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-6">
+          <Link href="/" className="flex items-center">
+            <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
+              pNFT
+            </span>
+          </Link>
           <div className="hidden w-full md:block md:w-auto">
             <ul className="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
               {links.map((link) => (
@@ -48,7 +48,9 @@ export function Navbar() {
               ))}
             </ul>
           </div>
+        </div>
 
+        <div className="flex items-center space-x-4">
           <Button
             variant="outline"
             size="icon"
@@ -64,6 +66,7 @@ export function Navbar() {
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
           </Button>
+          <Wallet />
         </div>
         <Sheet>
           <SheetTrigger className="block md:hidden">
