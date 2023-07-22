@@ -8,9 +8,11 @@ import { Address, createWalletClient, custom, http } from "viem";
 import { useAccount, useNetwork, useWaitForTransaction } from "wagmi";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
+import { base64url } from "@web3auth/openlogin-adapter";
 
 interface NFTCollectionItemProps extends OwnedNft {
   tbaAddress?: string;
+  refetch: () => void;
 }
 
 function transformTokenUri(uri?: string) {
@@ -27,6 +29,7 @@ export function NFTCollectionItem({
   contract,
   tokenId,
   tbaAddress,
+  refetch,
 }: NFTCollectionItemProps) {
   const { chain } = useNetwork();
   const { address } = useAccount();
@@ -68,7 +71,12 @@ export function NFTCollectionItem({
       });
       setTxHash(txHash);
     } catch (err) {
-      console.log(err);
+      toast({
+        variant: "destructive",
+        title: "Something went wrong.",
+        description: "Check the console for more details!",
+      });
+      console.error(err);
     }
   }, [tokenboundClient]);
 
@@ -89,6 +97,7 @@ export function NFTCollectionItem({
             </div>
           ),
         });
+        refetch();
       } else if (isLoading) {
         toast({
           title: "Waiting for transaction",
@@ -105,19 +114,11 @@ export function NFTCollectionItem({
   return (
     <div className="col-span-1">
       <div className="bg-stone-900 rounded-lg overflow-hidden">
-        {rawMetadata?.image?.startsWith("data") ? (
-          <img
-            style={{
-              backgroundImage: "url(" + rawMetadata.image + ");",
-            }}
-          />
-        ) : (
-          <img
-            className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
-            src={transformTokenUri(rawMetadata?.image)}
-            alt={rawMetadata?.description || description}
-          />
-        )}
+        <img
+          className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
+          src={transformTokenUri(rawMetadata?.image)}
+          alt={rawMetadata?.description || description}
+        />
       </div>
       <div className="space-x-6 pb-4 pt-6 flex justify-center">
         <Button
@@ -127,7 +128,7 @@ export function NFTCollectionItem({
           {tbaAddress !== undefined ? "TBA Minted!" : "Mint TBA"}
         </Button>
         {tbaAddress === undefined ? (
-          <Button disabled>Not sponsorable!</Button>
+          <Button disabled>Not Sponsorable!</Button>
         ) : (
           <Button disabled={tbaAddress === undefined} asChild>
             <Link href={`/${tbaAddress}/sponsorship`}>

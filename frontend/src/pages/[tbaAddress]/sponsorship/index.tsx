@@ -41,12 +41,22 @@ export default function SponsorshipPage() {
         const parsedTokenUri = await res.json();
         setParsedTokenUri(parsedTokenUri);
         return parsedTokenUri.image;
+      } else if (tokenUri.startsWith("data:application/json;base64,")) {
+        const parsedTokenUri = JSON.parse(
+          Buffer.from(
+            tokenUri.slice("data:application/json;base64,".length),
+            "base64"
+          ).toString()
+        ).image;
+        setParsedTokenUri(parsedTokenUri);
+        return parsedTokenUri;
       }
     } catch (e) {
       console.log("Error parsing", tokenUri, e);
     }
     return tokenUri;
   }
+  console.log({ finalImageUrl });
 
   return (
     <main className="min-h-[calc(100vh-72px)] container mt-12 grid grid-cols-5 gap-2">
@@ -62,11 +72,11 @@ export default function SponsorshipPage() {
           Active Sponsorships
         </h2>
       </div>
-      {tokenUri ? (
+      {finalImageUrl ? (
         <div className="col-span-2 px-4 space-y-4">
           <img
             src={finalImageUrl}
-            className="w-full h-full"
+            className="hover:scale-[105%] transition-transform ease-in-out w-full"
             alt="Your TBA image"
           />
           <Card>
@@ -79,7 +89,9 @@ export default function SponsorshipPage() {
             </CardHeader>
             <CardContent>
               <div className="whitespace-prewrap overflow-hidden">
-                <code>{JSON.stringify(parsedTokenUri, null, 2)}</code>
+                <code className="whitespace-[initial]">
+                  {JSON.stringify(parsedTokenUri, null, 2)}
+                </code>
               </div>
             </CardContent>
           </Card>

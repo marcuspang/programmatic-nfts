@@ -52,7 +52,7 @@ export function NFTCollection() {
         tbaData !== undefined &&
         transformTbaAndNftData(data, tbaData)
           .filter((nft) => nft.tokenType === "ERC721")
-          .map((nft, index) => <NFTCollectionItem key={index} {...nft} />)}
+          .map((nft, index) => <NFTCollectionItem key={index} {...nft} refetch={refetch} />)}
     </div>
   );
 }

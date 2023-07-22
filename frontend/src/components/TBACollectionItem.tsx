@@ -105,19 +105,11 @@ export function TBACollectionItem({
   return (
     <div className="col-span-1">
       <div className="bg-stone-900 rounded-lg overflow-hidden">
-        {rawMetadata?.image?.startsWith("data") ? (
-          <img
-            style={{
-              backgroundImage: `url(${rawMetadata.image});`,
-            }}
-          />
-        ) : (
-          <img
-            className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
-            src={transformTokenUri(rawMetadata?.image)}
-            alt={rawMetadata?.description || description}
-          />
-        )}
+        <img
+          className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
+          src={transformTokenUri(rawMetadata?.image)}
+          alt={rawMetadata?.description || description}
+        />
       </div>
       <div className="space-x-6 pb-4 pt-6 flex justify-center">
         <Button disabled={tokenboundClient === undefined} asChild>
