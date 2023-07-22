@@ -1,4 +1,3 @@
-import { TBACollection } from "@/components/TBACollection";
 import { NFTCollection } from "@/components/NFTCollection";
 
 export default function Home() {
@@ -7,7 +6,6 @@ export default function Home() {
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl pb-12">
         Your Token-Bound Accounts (TBAs)
       </h1>
-      <TBACollection />
       <NFTCollection />
     </main>
   );

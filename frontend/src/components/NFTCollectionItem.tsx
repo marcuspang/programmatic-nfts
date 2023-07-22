@@ -1,13 +1,17 @@
 import { contractAddress } from "@/constants/contractAddress";
 import { TokenboundClient } from "@tokenbound/sdk";
 import { OwnedNft } from "alchemy-sdk";
+import { MoveRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Address, createWalletClient, custom, http } from "viem";
 import { useAccount, useNetwork, useWaitForTransaction } from "wagmi";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
+import { useRouter } from "next/router";
 
-interface NFTCollectionItemProps extends OwnedNft {}
+interface NFTCollectionItemProps extends OwnedNft {
+  tbaAddress?: string;
+}
 
 function transformTokenUri(uri?: string) {
   if (uri?.startsWith("ipfs://")) {
@@ -22,7 +26,9 @@ export function NFTCollectionItem({
   description,
   contract,
   tokenId,
+  tbaAddress,
 }: NFTCollectionItemProps) {
+  const router = useRouter();
   const { chain } = useNetwork();
   const { address } = useAccount();
   const { toast } = useToast();
@@ -108,7 +114,7 @@ export function NFTCollectionItem({
           />
         ) : (
           <img
-            className="hover:scale-[110%] transition-transform w-full h-full"
+            className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
             src={transformTokenUri(rawMetadata?.image)}
             alt={rawMetadata?.description || description}
           />
@@ -116,12 +122,23 @@ export function NFTCollectionItem({
       </div>
       <div className="space-x-6 pb-4 pt-6 flex justify-center">
         <Button
-          disabled={tokenboundClient === undefined}
+          disabled={tbaAddress !== undefined || tokenboundClient === undefined}
           onClick={() => createAccount()}
         >
-          Mint TBA
+          {tbaAddress !== undefined ? "TBA Minted!" : "Mint TBA"}
         </Button>
-        <Button>Sponsorships</Button>
+        <Button
+          disabled={tbaAddress === undefined}
+          onClick={() => router.push("/" + tbaAddress + "/sponsorships")}
+        >
+          {tbaAddress === undefined ? (
+            "Not sponsorable!"
+          ) : (
+            <>
+              Sponsorships <MoveRight className="w-4 h-4 ml-2" />
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
