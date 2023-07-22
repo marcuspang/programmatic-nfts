@@ -166,7 +166,7 @@ export default function SponsorshipPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="whitespace-prewrap overflow-hidden">
+              <div className="overflow-auto">
                 <code className="whitespace-[initial]">
                   {JSON.stringify(parsedTokenUri, null, 2)}
                 </code>

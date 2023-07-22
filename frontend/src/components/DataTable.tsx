@@ -1,27 +1,10 @@
-import * as React from "react";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,15 +15,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  useAccountSponsorableApproveSponsorship,
+  useAccountSponsorableDisapproveSponsorship,
+  usePrepareAccountSponsorableApproveSponsorship,
+  usePrepareAccountSponsorableDisapproveSponsorship,
+} from "@/lib/generated";
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  Row,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ChevronDown } from "lucide-react";
+import * as React from "react";
 import { Address, formatEther } from "viem";
+import { useAccount, useNetwork } from "wagmi";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { useToast } from "./ui/use-toast";
 
 export interface Sponsorship {
+  id: number;
   readonly endBlock: bigint;
   readonly startBlock: bigint;
   readonly isActive: boolean;
@@ -49,76 +56,167 @@ export interface Sponsorship {
   readonly transformerAddress: Address;
   readonly fee: bigint;
 }
-
-export const columns: ColumnDef<Sponsorship>[] = [
-  {
-    accessorKey: "sponsor",
-    header: "Sponsor",
-    cell: ({ row }) => (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger className="cursor-default">
-            {row.getValue("sponsor").slice(0, 6) + "..."}
-          </TooltipTrigger>
-          <TooltipContent>{row.getValue("sponsor")}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    ),
-  },
-  {
-    accessorKey: "fee",
-    header: () => <div>Fee (in ETH)</div>,
-    cell: ({ row }) => {
-      const amount = row.getValue("fee");
-
-      return <div className="font-medium">{formatEther(amount)}</div>;
+const generateColumns = (tbaAddress: Address) =>
+  [
+    {
+      accessorKey: "sponsor",
+      header: "Sponsor",
+      cell: ({ row }) => (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger className="cursor-default">
+              {row.getValue("sponsor").slice(0, 6) + "..."}
+            </TooltipTrigger>
+            <TooltipContent>{row.getValue("sponsor")}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
     },
-  },
-  {
-    accessorKey: "startBlock",
-    header: "Start Block",
-    cell: ({ row }) => (
-      <div className="capitalize">{Number(row.getValue("startBlock"))}</div>
-    ),
-  },
-  {
-    accessorKey: "endBlock",
-    header: "End Block",
-    cell: ({ row }) => (
-      <div className="capitalize">{Number(row.getValue("endBlock"))}</div>
-    ),
-  },
-  {
-    accessorKey: "isActive",
-    header: "Is Active?",
-    cell: ({ row }) => (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <Checkbox checked={row.getValue("isActive")} disabled />
-          </TooltipTrigger>
-          <TooltipContent>Modified by sponsors</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    ),
-  },
-  {
-    accessorKey: "isApproved",
-    header: "Is Approved?",
-    cell: ({ row }) => (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <Checkbox checked={row.getValue("isApproved")} />
-          </TooltipTrigger>
-          <TooltipContent>Enable sponsorship and receive fees!</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    ),
-  },
-];
+    {
+      accessorKey: "fee",
+      header: () => <div>Fee (in ETH)</div>,
+      cell: ({ row }) => {
+        const amount = row.getValue("fee");
 
-export function DataTable({ data }: { data: Sponsorship[] }) {
+        return <div className="font-medium">{formatEther(amount)}</div>;
+      },
+    },
+    {
+      accessorKey: "startBlock",
+      header: "Start Block",
+      cell: ({ row }) => (
+        <div className="capitalize">{Number(row.getValue("startBlock"))}</div>
+      ),
+    },
+    {
+      accessorKey: "endBlock",
+      header: "End Block",
+      cell: ({ row }) => (
+        <div className="capitalize">{Number(row.getValue("endBlock"))}</div>
+      ),
+    },
+    {
+      accessorKey: "isActive",
+      header: "Is Active?",
+      cell: ({ row }) => (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Checkbox checked={row.getValue("isActive")} disabled />
+            </TooltipTrigger>
+            <TooltipContent>Modified by sponsors</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
+    },
+    {
+      accessorKey: "isApproved",
+      header: "Is Approved?",
+      cell: ({ row }) => (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <CheckboxForIsActive row={row} tbaAddress={tbaAddress} />
+            </TooltipTrigger>
+            <TooltipContent>
+              Enable sponsorship and receive fees!
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
+    },
+  ] as ColumnDef<Sponsorship>[];
+
+function CheckboxForIsActive({
+  row,
+  tbaAddress,
+}: {
+  row: Row<Sponsorship>;
+  tbaAddress: Address;
+}) {
+  const { address } = useAccount();
+  const { chain } = useNetwork();
+  const { config } = usePrepareAccountSponsorableApproveSponsorship({
+    account: address as Address,
+    address: tbaAddress,
+    chainId: chain?.id,
+    args: [BigInt(row.id || 0)],
+    enabled: chain !== undefined && !row.original.isApproved,
+  });
+  const { data, isLoading, isSuccess, write } =
+    useAccountSponsorableApproveSponsorship(config);
+  const { config: disapproveConfig } =
+    usePrepareAccountSponsorableDisapproveSponsorship({
+      account: address as Address,
+      address: tbaAddress,
+      chainId: chain?.id,
+      args: [BigInt(row.id || 0)],
+      enabled: chain !== undefined && !row.original.isApproved,
+    });
+  const {
+    data: disapproveData,
+    isLoading: disapproveIsLoading,
+    isSuccess: disapproveIsSuccess,
+    write: disapproveWrite,
+  } = useAccountSponsorableDisapproveSponsorship(disapproveConfig);
+
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (chain) {
+      if (isSuccess) {
+        toast({
+          title: "Successfully approved sponsorship",
+          description:
+            "If the start block is near the current one, the transformation should happen automatically!",
+        });
+      } else if (isLoading) {
+        toast({
+          title: "Approving sponsorship...",
+          description: "Transaction hash: " + data?.hash,
+        });
+      }
+    }
+  }, [data?.hash, isLoading]);
+
+  React.useEffect(() => {
+    if (chain) {
+      if (disapproveIsSuccess) {
+        toast({
+          title: "Successfully disapproved sponsorship",
+          description:
+            "The transformer changes should have reverted automatically!",
+        });
+      } else if (disapproveIsLoading) {
+        toast({
+          title: "Disapproving sponsorship...",
+          description: "Transaction hash: " + data?.hash,
+        });
+      }
+    }
+  }, [disapproveData?.hash, disapproveIsLoading]);
+
+  return (
+    <Checkbox
+      onClick={() => {
+        if (!row.getValue("isApproved")) {
+          write?.();
+        } else {
+          disapprove?.write();
+        }
+      }}
+      checked={row.getValue("isApproved")}
+    />
+  );
+}
+
+export function DataTable({
+  data,
+  tbaAddress,
+}: {
+  data: Sponsorship[];
+  tbaAddress: Address;
+}) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -126,6 +224,11 @@ export function DataTable({ data }: { data: Sponsorship[] }) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+
+  const columns = React.useMemo(
+    () => generateColumns(tbaAddress),
+    [tbaAddress]
+  );
 
   const table = useReactTable({
     data,
