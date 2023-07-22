@@ -14,6 +14,7 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { Wallet } from "./Wallet";
+import { ColourChangeIcon } from "./ColourChangeIcon";
 
 const links = [
   {
@@ -51,54 +52,46 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              if (theme !== undefined && theme === "dark") {
-                setTheme("light");
-              } else {
-                setTheme("dark");
-              }
-            }}
-          >
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
+        <div className="md:flex items-center space-x-4 hidden">
+          <ColourChangeIcon />
           <ConnectButton />
           {/* <Wallet /> */}
         </div>
-        <Sheet>
-          <SheetTrigger className="block md:hidden">
-            <span className="sr-only">Open main menu</span>
-            <svg
-              className="w-5 h-5"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 17 14"
-            >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M1 1h15M1 7h15M1 13h15"
-              />
-            </svg>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Are you sure absolutely sure?</SheetTitle>
-              <SheetDescription>
-                This action cannot be undone. This will permanently delete your
-                account and remove your data from our servers.
-              </SheetDescription>
-            </SheetHeader>
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center space-x-4 md:hidden">
+          <ColourChangeIcon />
+          <Sheet>
+            <SheetTrigger className="block md:hidden" asChild>
+              <Button className="px-[10px]">
+                <span className="sr-only">Open main menu</span>
+                <svg
+                  className="w-4 h-4"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 17 14"
+                >
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M1 1h15M1 7h15M1 13h15"
+                  />
+                </svg>
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle className="text-left">Programmatic NFTs</SheetTitle>
+                <SheetDescription>
+                  <div>
+                    <ConnectButton />
+                  </div>
+                </SheetDescription>
+              </SheetHeader>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </nav>
   );

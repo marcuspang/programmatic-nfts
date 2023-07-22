@@ -1,4 +1,4 @@
-import { contractAddress } from "@/constants/contractAddress";
+import { CONTRACT_ADDRESSES } from "@/constants/contractAddress";
 import { TokenboundClient } from "@tokenbound/sdk";
 import { OwnedNft } from "alchemy-sdk";
 import { MoveRight } from "lucide-react";
@@ -51,7 +51,7 @@ export function NFTCollectionItem({
     new TokenboundClient({
       walletClient,
       chainId: chain?.id,
-      implementationAddress: contractAddress[chain.id].accountProxy,
+      implementationAddress: CONTRACT_ADDRESSES[chain.id].accountProxy,
     });
 
   const createAccount = useCallback(async () => {
@@ -60,7 +60,7 @@ export function NFTCollectionItem({
       const transaction = await tokenboundClient.prepareCreateAccount({
         tokenContract: contract.address as Address,
         tokenId: `${tokenId}`,
-        implementationAddress: contractAddress[chain.id].accountProxy,
+        implementationAddress: CONTRACT_ADDRESSES[chain.id].accountProxy,
       });
 
       const txHash = await walletClient.sendTransaction({
@@ -79,7 +79,7 @@ export function NFTCollectionItem({
         const tbaAddress = tokenboundClient?.getAccount({
           tokenContract: contract.address as Address,
           tokenId: `${tokenId}`,
-          implementationAddress: contractAddress[chain.id].accountProxy,
+          implementationAddress: CONTRACT_ADDRESSES[chain.id].accountProxy,
         });
         toast({
           title: "Successfully created account",

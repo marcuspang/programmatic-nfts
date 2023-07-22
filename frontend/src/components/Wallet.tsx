@@ -1,5 +1,5 @@
-import { chainRpcPrefix } from "@/constants/chainRpcPrefix";
-import { txServiceUrl } from "@/constants/txServiceUrl";
+import { CHAIN_RPC_PREFIX } from "@/constants/chainRpcPrefix";
+import { TX_SERVICE_URL } from "@/constants/txServiceUrl";
 import { isTestnet } from "@/lib/isTestnet";
 import {
   AuthKitSignInData,
@@ -87,7 +87,7 @@ export function Wallet() {
 
   useEffect(() => {
     const web3AuthModalPack = new Web3AuthModalPack({
-      txServiceUrl: txServiceUrl[chains[0].id],
+      txServiceUrl: TX_SERVICE_URL[chains[0].id],
     });
 
     web3AuthModalPack
@@ -99,7 +99,7 @@ export function Wallet() {
           chainConfig: {
             chainNamespace: CHAIN_NAMESPACES.EIP155,
             chainId: "0x" + chains[0].id.toString(16),
-            rpcTarget: `${chainRpcPrefix[chains[0].id]}${process.env
+            rpcTarget: `${CHAIN_RPC_PREFIX[chains[0].id]}${process.env
               .INFURA_KEY!}`,
           },
           uiConfig: {

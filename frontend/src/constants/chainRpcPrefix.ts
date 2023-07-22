@@ -1,4 +1,4 @@
-export const chainRpcPrefix: Record<number, string> = {
+export const CHAIN_RPC_PREFIX: Record<number, string> = {
   1101: "https://zkevm-rpc.com",
   137: "https://polygon-mainnet.infura.io/v3/",
   59144: "https://linea-mainnet.infura.io/v3/",

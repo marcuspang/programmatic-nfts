@@ -1,6 +1,6 @@
 import { Address } from "viem";
 
-export const contractAddress: Record<number, Record<string, Address>> = {
+export const CONTRACT_ADDRESSES: Record<number, Record<string, Address>> = {
   80001: {
     registry: "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
     entryPoint: "0xb9491f0aB924a1D9D565a4105123919F010a760a",

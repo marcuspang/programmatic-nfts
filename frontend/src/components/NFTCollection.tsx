@@ -49,6 +49,7 @@ export function NFTCollection() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {data !== undefined &&
+        tbaData !== undefined &&
         transformTbaAndNftData(data, tbaData)
           .filter((nft) => nft.tokenType === "ERC721")
           .map((nft, index) => <NFTCollectionItem key={index} {...nft} />)}
