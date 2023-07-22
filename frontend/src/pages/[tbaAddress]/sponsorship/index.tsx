@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,29 +8,62 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAccountSponsorableTokenUri } from "@/lib/generated";
+import {
+  useAccountSponsorableIsSponsorable,
+  useAccountSponsorableSetIsSponsorable,
+  useAccountSponsorableTokenUri,
+  usePrepareAccountSponsorableSetIsSponsorable,
+} from "@/lib/generated";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { isAddress } from "viem";
-import { Address, useNetwork } from "wagmi";
+import { Address, useAccount, useNetwork } from "wagmi";
 
 export default function SponsorshipPage() {
   const router = useRouter();
+  const { address } = useAccount();
   const { chain } = useNetwork();
   const { tbaAddress } = router.query;
   const [finalImageUrl, setFinalImageUrl] = useState("");
   const [parsedTokenUri, setParsedTokenUri] = useState("");
 
   const { data: tokenUri } = useAccountSponsorableTokenUri({
-    account: tbaAddress as Address,
+    account: address,
     address: tbaAddress as Address,
     chainId: chain?.id,
     enabled:
+      address !== undefined &&
       tbaAddress !== undefined &&
       isAddress(tbaAddress.toString()) &&
       Boolean(chain),
   });
-  useEffect(() => {
+  const { data: isSponsorable } = useAccountSponsorableIsSponsorable({
+    account: address,
+    address: tbaAddress as Address,
+    chainId: chain?.id,
+    enabled:
+      address !== undefined &&
+      tbaAddress !== undefined &&
+      isAddress(tbaAddress.toString()) &&
+      Boolean(chain),
+  });
+
+  const { config, error } = usePrepareAccountSponsorableSetIsSponsorable({
+    account: address,
+    address: tbaAddress as Address,
+    chainId: chain?.id,
+    enabled:
+      address !== undefined &&
+      tbaAddress !== undefined &&
+      isAddress(tbaAddress.toString()) &&
+      Boolean(chain) &&
+      isSponsorable !== undefined,
+    args: [true],
+  });
+  const { data, write } = useAccountSponsorableSetIsSponsorable(config);
+
+  useEffect(() => { 
     if (tokenUri) {
       parseTokenUri(tokenUri).then(setFinalImageUrl);
     }
@@ -56,15 +91,26 @@ export default function SponsorshipPage() {
     }
     return tokenUri;
   }
-  console.log({ finalImageUrl });
 
   return (
-    <main className="min-h-[calc(100vh-72px)] container mt-12 grid grid-cols-5 gap-2">
+    <main className="min-h-[calc(100vh-120px)] container mt-12 grid grid-cols-5 gap-2">
       <div className="col-span-3 px-4">
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl pb-4">
           Your TBA Sponsorship
         </h1>
-        <span className="font-mono leading-7">{tbaAddress?.toString()}</span>
+        <p className="font-mono leading-7">{tbaAddress?.toString()}</p>
+        <Button
+          size={"sm"}
+          className={cn(
+            "mt-1 cursor-pointer",
+            isSponsorable
+              ? "bg-green-700 dark:bg-green-400 hover:bg-green-600"
+              : "bg-red-700 dark:bg-red-400 hover:bg-red-600"
+          )}
+          onClick={() => write?.()}
+        >
+          {isSponsorable ? "Sponsorable Enabled" : "Sponsorable Disabled"}
+        </Button>
         <h2 className="pt-12 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors">
           Sponsorship Requests
         </h2>
@@ -74,11 +120,13 @@ export default function SponsorshipPage() {
       </div>
       {finalImageUrl ? (
         <div className="col-span-2 px-4 space-y-4">
-          <img
-            src={finalImageUrl}
-            className="hover:scale-[105%] transition-transform ease-in-out w-full"
-            alt="Your TBA image"
-          />
+          <div className="overflow-hidden">
+            <img
+              src={finalImageUrl}
+              className="hover:scale-[105%] transition-transform ease-in-out w-full"
+              alt="Your TBA image"
+            />
+          </div>
           <Card>
             <CardHeader>
               <CardTitle className="font-semibold">Token URI</CardTitle>

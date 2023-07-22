@@ -93,7 +93,7 @@ export function NFTCollectionItem({
           description: (
             <div>
               TBA successfully deployed, address:{" "}
-              <span className="font-mono">{tbaAddress}</span>
+              <span className="font-mono whitespace-[initial]">{tbaAddress}</span>
             </div>
           ),
         });
@@ -103,7 +103,7 @@ export function NFTCollectionItem({
           title: "Waiting for transaction",
           description: (
             <div>
-              Transaction hash: <span className="font-mono">{txHash}</span>
+              Transaction hash: <span className="font-mono whitespace-[initial]">{txHash}</span>
             </div>
           ),
         });

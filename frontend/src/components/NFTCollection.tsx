@@ -33,7 +33,6 @@ export function NFTCollection() {
     enabled: address !== undefined && chain !== undefined,
   });
   const { data: tbaData, loading } = useGetTbas();
-
   useEffect(() => {
     refetch();
   }, [address, chain]);
@@ -51,8 +50,10 @@ export function NFTCollection() {
       {data !== undefined &&
         tbaData !== undefined &&
         transformTbaAndNftData(data, tbaData)
-          .filter((nft) => nft.tokenType === "ERC721")
-          .map((nft, index) => <NFTCollectionItem key={index} {...nft} refetch={refetch} />)}
+          // .filter((nft) => nft.tokenType === "ERC721")
+          .map((nft, index) => (
+            <NFTCollectionItem key={index} {...nft} refetch={refetch} />
+          ))}
     </div>
   );
 }

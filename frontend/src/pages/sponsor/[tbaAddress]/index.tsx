@@ -17,23 +17,26 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { CONTRACT_ADDRESS } from "@/constants/contractAddress";
 import {
   useAccountSponsorableAddSponsorship,
   usePrepareAccountSponsorableAddSponsorship,
 } from "@/lib/generated";
-import { BellRing, Check } from "lucide-react";
-import { useRouter } from "next/router";
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Address, etherUnits, isAddress } from "viem";
-import { useBlockNumber } from "wagmi";
-import * as z from "zod";
+import { Check } from "lucide-react";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { Address, isAddress } from "viem";
+import { useAccount, useBlockNumber, useNetwork } from "wagmi";
+import * as z from "zod";
 
 const formSchema = z
   .object({
-    startBlock: z.number().min(0),
-    endBlock: z.number().min(0),
+    startBlock: z.coerce.number().min(0),
+    endBlock: z.coerce.number().min(0),
+    sponsorshipAmount: z.coerce.number().gt(0),
     transformerAddress: z
       .string()
       .refine(isAddress, () => ({ message: "Must be a valid address" })),
@@ -45,42 +48,97 @@ const formSchema = z
 
 export default function SponsorTbaPage() {
   const router = useRouter();
-  const { data } = useBlockNumber();
+  const { address } = useAccount();
+  const { data, isLoading } = useBlockNumber();
+  const { chain } = useNetwork();
+  const { toast } = useToast();
   const { tbaAddress } = router.query;
-
-  const [startBlock, setStartBlock] = useState(data);
-  const [endBlock, setEndBlock] = useState(data);
-  const [transformerAddress, setTransformerAddress] = useState<Address>();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      startBlock,
-      endBlock,
-      transformerAddress,
+      startBlock: 0,
+      endBlock: 0,
+      sponsorshipAmount: 1_000_000_000_000_000,
+      transformerAddress: chain
+        ? CONTRACT_ADDRESS[chain.id]?.svgLayerTransformer
+        : undefined,
     },
   });
 
+  useEffect(() => {
+    if (
+      !isLoading &&
+      data &&
+      form.getValues("startBlock") === 0 &&
+      form.getValues("endBlock") === 0
+    ) {
+      form.setValue("startBlock", Number(data));
+      form.setValue("endBlock", Number(data));
+    }
+  }, [data, isLoading]);
+
+  const startBlock = form.watch("startBlock");
+  const endBlock = form.watch("endBlock");
+  const sponsorshipAmount = form.watch("sponsorshipAmount");
+  const transformerAddress = form.watch("transformerAddress");
+
   const { config } = usePrepareAccountSponsorableAddSponsorship({
-    value: 1000000000000000000n,
+    address: tbaAddress as Address,
+    account: address,
+    value: BigInt(sponsorshipAmount),
     // start, end, transformerAddress
-    args: [startBlock!, endBlock!, transformerAddress!],
+    args: [BigInt(startBlock), BigInt(endBlock), transformerAddress!],
     enabled:
-      startBlock !== undefined &&
-      endBlock !== undefined &&
-      transformerAddress !== undefined,
+      transformerAddress !== undefined &&
+      tbaAddress !== undefined &&
+      isAddress(tbaAddress.toString()) &&
+      address !== undefined,
   });
 
-  useAccountSponsorableAddSponsorship(config);
+  const {
+    write,
+    isSuccess,
+    data: sponsorshipData,
+    isLoading: isSponsorshipLoading,
+  } = useAccountSponsorableAddSponsorship(config);
+
+  useEffect(() => {
+    if (chain) {
+      if (isSuccess) {
+        toast({
+          title: "Successfully created sponsorship",
+          description: (
+            <div>
+              Sponsorship successfully created, address:{" "}
+              <span className="font-mono whitespace-[initial]">
+                {tbaAddress}
+              </span>
+            </div>
+          ),
+        });
+      } else if (isSponsorshipLoading) {
+        toast({
+          title: "Waiting for transaction",
+          description: (
+            <div>
+              Transaction hash:{" "}
+              <span className="font-mono whitespace-[initial]">
+                {sponsorshipData?.hash}
+              </span>
+            </div>
+          ),
+        });
+      }
+    }
+  }, [sponsorshipData?.hash, isLoading]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+    write?.();
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-72px)] flex-col items-center container mt-12">
+    <main className="flex min-h-[calc(100vh-120px)] flex-col items-center container my-12">
       <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl pb-12">
         Sponsor a TBA
       </h1>
@@ -94,7 +152,7 @@ export default function SponsorTbaPage() {
           </CardDescription>
         </CardHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="grid gap-4">
               <FormField
                 control={form.control}
@@ -118,11 +176,32 @@ export default function SponsorTbaPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>End Block</FormLabel>
+                    <div className="flex items-center space-x-2">
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <span className="text-muted-foreground text-sm">
+                        ~{+((endBlock - startBlock) * 2).toString()}s
+                      </span>
+                    </div>
+                    <FormDescription>
+                      This is when the sponsorship will end.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sponsorshipAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sponsorship Amount (wei)</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
                     <FormDescription>
-                      This is when the sponsorship will end.
+                      This is how much wei you want to give the TBA owner.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -145,13 +224,13 @@ export default function SponsorTbaPage() {
                 )}
               />
             </CardContent>
+            <CardFooter>
+              <Button className="w-full" type="submit">
+                <Check className="mr-2 h-4 w-4" /> Submit
+              </Button>
+            </CardFooter>
           </form>
         </Form>
-        <CardFooter>
-          <Button className="w-full" type="submit">
-            <Check className="mr-2 h-4 w-4" /> Submit
-          </Button>
-        </CardFooter>
       </Card>
     </main>
   );
