@@ -1,4 +1,4 @@
-import { CONTRACT_ADDRESSES } from "@/constants/contractAddress";
+import { CONTRACT_ADDRESS } from "@/constants/contractAddress";
 import { TokenboundClient } from "@tokenbound/sdk";
 import { useCallback, useEffect } from "react";
 import { Address, createWalletClient, http, custom, isAddress } from "viem";
@@ -23,7 +23,7 @@ export function useGetTbaTokenUri(tbaAddress?: string) {
       new TokenboundClient({
         walletClient,
         chainId: chain.id,
-        implementationAddress: CONTRACT_ADDRESSES[chain.id].accountProxy,
+        implementationAddress: CONTRACT_ADDRESS[chain.id].accountProxy,
       });
 
     const result = await tokenboundClient?.executeCall({
