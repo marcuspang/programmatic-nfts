@@ -8,19 +8,38 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import type { AppProps } from "next/app";
 import { Inter } from "next/font/google";
-import { goerli, polygon, polygonMumbai } from "viem/chains";
-import { WagmiConfig, configureChains, createConfig, mainnet } from "wagmi";
+import {
+  polygon,
+  polygonMumbai,
+  polygonZkEvm,
+  polygonZkEvmTestnet,
+  goerli,
+  mainnet,
+  lineaTestnet,
+} from "viem/chains";
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { Toaster } from "@/components/ui/toaster";
+import { isTestnet } from "@/lib/isTestnet";
 
 const { chains, publicClient } = configureChains(
-  [polygonMumbai, polygon],
+  [
+    polygon,
+    polygonZkEvm,
+    mainnet,
+    polygonMumbai,
+    lineaTestnet,
+    polygonZkEvmTestnet,
+    goerli,
+  ],
   [
     publicProvider(),
     alchemyProvider({
-      apiKey: process.env.POLYGON_TESTNET_ALCHEMY_API_KEY!,
+      apiKey: isTestnet()
+        ? process.env.POLYGON_TESTNET_ALCHEMY_API_KEY!
+        : process.env.POLYGON_ALCHEMY_API_KEY!,
     }),
   ]
 );

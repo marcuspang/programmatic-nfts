@@ -1,10 +1,6 @@
-export const txServiceUrl = {
-  mainnet: {
-    eth: "https://safe-transaction-mainnet.safe.global/",
-    polygon: "https://safe-transaction-polygon.safe.global/",
-  },
-  testnet: {
-    eth: "https://safe-transaction-goerli.safe.global/",
-    polygon: "https://safe-transaction-polygon.safe.global/",
-  },
+export const txServiceUrl: Record<number, string> = {
+  1: "https://safe-transaction-mainnet.safe.global/",
+  137: "https://safe-transaction-polygon.safe.global/",
+  5: "https://safe-transaction-goerli.safe.global/",
+  80001: "https://safe-transaction-polygon.safe.global/",
 };

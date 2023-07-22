@@ -1,17 +1,10 @@
+import { contractAddress } from "@/constants/contractAddress";
 import { TokenboundClient } from "@tokenbound/sdk";
 import { OwnedNft } from "alchemy-sdk";
-import { Button } from "./ui/button";
-import { contractAddress } from "@/constants/contractAddress";
-import { isTestnet } from "@/lib/isTestnet";
-import { Address, WalletClient, createWalletClient, custom, http } from "viem";
-import {
-  useAccount,
-  useNetwork,
-  useWaitForTransaction,
-  useWalletClient,
-} from "wagmi";
-import { CURRENT_CHAIN } from "./Wallet";
 import { useCallback, useEffect, useState } from "react";
+import { Address, createWalletClient, custom, http } from "viem";
+import { useAccount, useNetwork, useWaitForTransaction } from "wagmi";
+import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 
 interface NFTCollectionItemProps extends OwnedNft {}
@@ -42,7 +35,7 @@ export function NFTCollectionItem({
     // @ts-ignore
     transport: window.ethereum ? custom(window.ethereum) : http(),
   });
-  const { data, isError, isLoading, isSuccess } = useWaitForTransaction({
+  const { isLoading, isSuccess } = useWaitForTransaction({
     hash: txHash as Address,
     enabled: txHash !== undefined,
   });
@@ -52,9 +45,7 @@ export function NFTCollectionItem({
     new TokenboundClient({
       walletClient,
       chainId: chain?.id,
-      implementationAddress:
-        contractAddress[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
-          .accountProxy,
+      implementationAddress: contractAddress[chain.id].accountProxy,
     });
 
   const createAccount = useCallback(async () => {
@@ -63,9 +54,7 @@ export function NFTCollectionItem({
       const transaction = await tokenboundClient.prepareCreateAccount({
         tokenContract: contract.address as Address,
         tokenId: `${tokenId}`,
-        implementationAddress:
-          contractAddress[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
-            .accountProxy,
+        implementationAddress: contractAddress[chain.id].accountProxy,
       });
 
       const txHash = await walletClient.sendTransaction({
@@ -79,32 +68,32 @@ export function NFTCollectionItem({
   }, [tokenboundClient]);
 
   useEffect(() => {
-    if (isSuccess) {
-      const tbaAddress = tokenboundClient?.getAccount({
-        tokenContract: contract.address as Address,
-        tokenId: `${tokenId}`,
-        implementationAddress:
-          contractAddress[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
-            .accountProxy,
-      });
-      toast({
-        title: "Successfully created account",
-        description: (
-          <div>
-            TBA successfully deployed, address:{" "}
-            <span className="font-mono">{tbaAddress}</span>
-          </div>
-        ),
-      });
-    } else if (isLoading) {
-      toast({
-        title: "Waiting for transaction",
-        description: (
-          <div>
-            Transaction hash: <span className="font-mono">{txHash}</span>
-          </div>
-        ),
-      });
+    if (chain) {
+      if (isSuccess) {
+        const tbaAddress = tokenboundClient?.getAccount({
+          tokenContract: contract.address as Address,
+          tokenId: `${tokenId}`,
+          implementationAddress: contractAddress[chain.id].accountProxy,
+        });
+        toast({
+          title: "Successfully created account",
+          description: (
+            <div>
+              TBA successfully deployed, address:{" "}
+              <span className="font-mono">{tbaAddress}</span>
+            </div>
+          ),
+        });
+      } else if (isLoading) {
+        toast({
+          title: "Waiting for transaction",
+          description: (
+            <div>
+              Transaction hash: <span className="font-mono">{txHash}</span>
+            </div>
+          ),
+        });
+      }
     }
   }, [txHash, isLoading]);
 
@@ -125,7 +114,7 @@ export function NFTCollectionItem({
           />
         )}
       </div>
-      <div className="space-x-8 pb-4 pt-6 flex justify-center">
+      <div className="space-x-6 pb-4 pt-6 flex justify-center">
         <Button
           disabled={tokenboundClient === undefined}
           onClick={() => createAccount()}

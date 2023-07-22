@@ -1,4 +1,3 @@
-import { chainIds } from "@/constants/chainIds";
 import { chainRpcPrefix } from "@/constants/chainRpcPrefix";
 import { txServiceUrl } from "@/constants/txServiceUrl";
 import { isTestnet } from "@/lib/isTestnet";
@@ -19,7 +18,13 @@ import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { ChevronDown, LogOutIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Address, useConnect, useEnsName } from "wagmi";
+import {
+  Address,
+  useConnect,
+  useEnsName,
+  useNetwork,
+  useSwitchNetwork,
+} from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
 import { Button } from "./ui/button";
 import {
@@ -31,14 +36,12 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { polygonMumbai } from "viem/chains";
+import { NetworkSwitch } from "./NetworkSwitch";
 
 const connectedHandler: Web3AuthEventListener = (data) =>
   console.log("CONNECTED", data);
 const disconnectedHandler: Web3AuthEventListener = (data) =>
   console.log("DISCONNECTED", data);
-
-// TODO: setup with other EVM chains
-export const CURRENT_CHAIN: "polygon" | "eth" | "zkPolygon" = "polygon";
 
 const modalConfig = {
   [WALLET_ADAPTERS.TORUS_EVM]: {
@@ -64,35 +67,16 @@ const openloginAdapter = new OpenloginAdapter({
   },
 });
 
-const web3AuthModalPack = new Web3AuthModalPack({
-  txServiceUrl:
-    txServiceUrl[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN],
-});
-
-function generateConfig(theme?: string): Web3AuthOptions {
-  return {
-    clientId: process.env.WEB3AUTH_CLIENT_ID!,
-    web3AuthNetwork: isTestnet() ? "testnet" : "mainnet",
-    chainConfig: {
-      chainNamespace: CHAIN_NAMESPACES.EIP155,
-      chainId: chainIds[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN],
-      rpcTarget: `${
-        chainRpcPrefix[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
-      }${process.env.INFURA_KEY!}`,
-    },
-    uiConfig: {
-      theme: theme === "dark" || theme === "light" ? theme : "dark",
-      loginMethodsOrder: ["google", "facebook", "email_passwordless"],
-    },
-  };
-}
 export function Wallet() {
+  const { chain, chains } = useNetwork();
+  console.log({ chains });
   const [safeAuthSignInResponse, setSafeAuthSignInResponse] =
     useState<AuthKitSignInData | null>(null);
   const [userInfo, setUserInfo] = useState<Partial<UserInfo>>();
   const [provider, setProvider] = useState<SafeEventEmitterProvider | null>(
     null
   );
+  const [web3AuthModal, setWeb3AuthModal] = useState<Web3AuthModalPack>();
   const { theme } = useTheme();
   const { connect, reset } = useConnect({
     connector: new InjectedConnector(),
@@ -102,11 +86,27 @@ export function Wallet() {
   });
 
   useEffect(() => {
-    const options = generateConfig(theme);
+    const web3AuthModalPack = new Web3AuthModalPack({
+      txServiceUrl: txServiceUrl[chains[0].id],
+    });
 
     web3AuthModalPack
       .init({
-        options,
+        options: {
+          clientId: process.env.WEB3AUTH_CLIENT_ID!,
+          web3AuthNetwork:
+            chains[0].id === polygonMumbai.id ? "testnet" : "mainnet",
+          chainConfig: {
+            chainNamespace: CHAIN_NAMESPACES.EIP155,
+            chainId: "0x" + chains[0].id.toString(16),
+            rpcTarget: `${chainRpcPrefix[chains[0].id]}${process.env
+              .INFURA_KEY!}`,
+          },
+          uiConfig: {
+            theme: (theme === "light" ? theme : "dark") as "light" | "dark",
+            loginMethodsOrder: ["google", "facebook", "email_passwordless"],
+          },
+        },
         // @ts-ignore
         adapters: [openloginAdapter],
         modalConfig,
@@ -120,6 +120,8 @@ export function Wallet() {
         );
       });
 
+    setWeb3AuthModal(web3AuthModalPack);
+
     return () => {
       web3AuthModalPack.unsubscribe(ADAPTER_EVENTS.CONNECTED, connectedHandler);
       web3AuthModalPack.unsubscribe(
@@ -130,33 +132,33 @@ export function Wallet() {
   }, []);
 
   useEffect(() => {
-    if (web3AuthModalPack && web3AuthModalPack.getProvider()) {
+    if (web3AuthModal && web3AuthModal.getProvider()) {
       (async () => {
         await login();
       })();
     }
-  }, [web3AuthModalPack]);
+  }, [web3AuthModal]);
 
   const login = async () => {
-    if (!web3AuthModalPack) return;
+    if (!web3AuthModal) return;
 
-    const signInInfo = await web3AuthModalPack.signIn();
-    const userInfo = await web3AuthModalPack.getUserInfo();
+    const signInInfo = await web3AuthModal.signIn();
+    const userInfo = await web3AuthModal.getUserInfo();
 
-    connect({
-      chainId: polygonMumbai.id,
-    });
+    // connect({
+    //   chainId: polygonMumbai.id,
+    // });
 
     setSafeAuthSignInResponse(signInInfo);
     setUserInfo(userInfo || undefined);
-    setProvider(web3AuthModalPack.getProvider() as SafeEventEmitterProvider);
+    setProvider(web3AuthModal.getProvider() as SafeEventEmitterProvider);
   };
 
   const logout = async () => {
-    if (!web3AuthModalPack) return;
+    if (!web3AuthModal) return;
 
-    await web3AuthModalPack.signOut();
-    reset();
+    await web3AuthModal?.signOut();
+    // reset();
 
     setProvider(null);
     setSafeAuthSignInResponse(null);
@@ -164,6 +166,7 @@ export function Wallet() {
 
   return !!provider ? (
     <div className="flex items-center">
+      <NetworkSwitch />
       <DropdownMenu>
         <DropdownMenuTrigger className="font-mono flex">
           {!isError
@@ -175,10 +178,6 @@ export function Wallet() {
         </DropdownMenuTrigger>
         <DropdownMenuContent className="px-2">
           <DropdownMenuLabel>
-            <span className="font-normal">
-              Chain: {CURRENT_CHAIN.toUpperCase()}
-            </span>{" "}
-            <br />
             <span className="font-mono">
               {!isError
                 ? data
@@ -188,6 +187,14 @@ export function Wallet() {
             </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              if (chain?.id === polygonMumbai.id) {
+              }
+            }}
+          >
+            Switch to
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={logout}>
             Logout <LogOutIcon className="ml-2 h-4 w-4" />
           </DropdownMenuItem>
