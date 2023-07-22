@@ -1,3 +1,4 @@
+import { SponsorshipTables } from "@/components/SponsorshipTables";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,9 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 import {
   useAccountSponsorableIsSponsorable,
   useAccountSponsorableSetIsSponsorable,
+  useAccountSponsorableSponsorships,
   useAccountSponsorableTokenUri,
   usePrepareAccountSponsorableSetIsSponsorable,
 } from "@/lib/generated";
@@ -24,6 +27,7 @@ export default function SponsorshipPage() {
   const router = useRouter();
   const { address } = useAccount();
   const { chain } = useNetwork();
+  const { toast } = useToast();
   const { tbaAddress } = router.query;
   const [finalImageUrl, setFinalImageUrl] = useState("");
   const [parsedTokenUri, setParsedTokenUri] = useState("");
@@ -49,7 +53,7 @@ export default function SponsorshipPage() {
       Boolean(chain),
   });
 
-  const { config, error } = usePrepareAccountSponsorableSetIsSponsorable({
+  const { config } = usePrepareAccountSponsorableSetIsSponsorable({
     account: address,
     address: tbaAddress as Address,
     chainId: chain?.id,
@@ -61,13 +65,44 @@ export default function SponsorshipPage() {
       isSponsorable !== undefined,
     args: [true],
   });
-  const { data, write } = useAccountSponsorableSetIsSponsorable(config);
+  const { data, isSuccess, isLoading, write } =
+    useAccountSponsorableSetIsSponsorable(config);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (tokenUri) {
       parseTokenUri(tokenUri).then(setFinalImageUrl);
     }
   }, [tokenUri]);
+
+  useEffect(() => {
+    if (chain) {
+      if (isSuccess) {
+        toast({
+          title: "Successfully created sponsorship",
+          description: (
+            <div>
+              Sponsorship successfully created, address:{" "}
+              <span className="font-mono whitespace-[initial]">
+                {tbaAddress}
+              </span>
+            </div>
+          ),
+        });
+      } else if (isLoading) {
+        toast({
+          title: "Waiting for transaction",
+          description: (
+            <div>
+              Transaction hash:{" "}
+              <span className="font-mono whitespace-[initial]">
+                {data?.hash}
+              </span>
+            </div>
+          ),
+        });
+      }
+    }
+  }, [data?.hash, isLoading]);
 
   async function parseTokenUri(tokenUri: string): Promise<string> {
     try {
@@ -111,12 +146,7 @@ export default function SponsorshipPage() {
         >
           {isSponsorable ? "Sponsorable Enabled" : "Sponsorable Disabled"}
         </Button>
-        <h2 className="pt-12 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors">
-          Sponsorship Requests
-        </h2>
-        <h2 className="pt-12 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors">
-          Active Sponsorships
-        </h2>
+        <SponsorshipTables tbaAddress={tbaAddress?.toString()} />
       </div>
       {finalImageUrl ? (
         <div className="col-span-2 px-4 space-y-4">

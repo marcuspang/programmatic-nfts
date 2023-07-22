@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 
 interface TBACollectionItemProps extends OwnedNft {
-  tbaAddress: string;
+  tbaAddress?: string;
 }
 
 function transformTokenUri(uri?: string) {
@@ -18,10 +18,12 @@ function transformTokenUri(uri?: string) {
 export function TBACollectionItem({
   rawMetadata,
   description,
-  contract,
-  tokenId,
   tbaAddress,
 }: TBACollectionItemProps) {
+  if (!tbaAddress) {
+    return null;
+  }
+
   return (
     <div className="col-span-1">
       <div className="bg-stone-900 rounded-lg overflow-hidden">
