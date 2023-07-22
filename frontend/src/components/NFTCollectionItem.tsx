@@ -1,14 +1,18 @@
+import { TokenboundClient } from "@tokenbound/sdk";
 import { OwnedNft } from "alchemy-sdk";
 import { Button } from "./ui/button";
-import {
-  usePrepareErc6551RegistryCreateAccount,
-  useErc6551RegistryCreateAccount,
-} from "@/lib/generated";
 import { contractAddress } from "@/constants/contractAddress";
 import { isTestnet } from "@/lib/isTestnet";
+import { Address, WalletClient, createWalletClient, custom, http } from "viem";
+import {
+  useAccount,
+  useNetwork,
+  useWaitForTransaction,
+  useWalletClient,
+} from "wagmi";
 import { CURRENT_CHAIN } from "./Wallet";
-import { chainIds } from "@/constants/chainIds";
-import { Address } from "viem";
+import { useCallback, useEffect, useState } from "react";
+import { useToast } from "./ui/use-toast";
 
 interface NFTCollectionItemProps extends OwnedNft {}
 
@@ -26,22 +30,83 @@ export function NFTCollectionItem({
   contract,
   tokenId,
 }: NFTCollectionItemProps) {
-  console.log(contract.address, tokenId)
-  const { config } = usePrepareErc6551RegistryCreateAccount({
-    args: [
-      contractAddress[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
-        .accountProxy,
-      BigInt(chainIds[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]),
-      contract.address as Address,
-      BigInt(tokenId),
-      BigInt(
-        "0x6551655165516551655165516551655165516551655165516551655165516551"
-      ),
-      `0x0`,
-    ],
-    enabled: Boolean(contract.address) && Boolean(tokenId),
+  const { chain } = useNetwork();
+  const { address } = useAccount();
+  const { toast } = useToast();
+
+  const [txHash, setTxHash] = useState<string>();
+
+  const walletClient = createWalletClient({
+    chain,
+    account: address,
+    // @ts-ignore
+    transport: window.ethereum ? custom(window.ethereum) : http(),
   });
-  const { write } = useErc6551RegistryCreateAccount(config);
+  const { data, isError, isLoading, isSuccess } = useWaitForTransaction({
+    hash: txHash as Address,
+    enabled: txHash !== undefined,
+  });
+
+  const tokenboundClient =
+    chain &&
+    new TokenboundClient({
+      walletClient,
+      chainId: chain?.id,
+      implementationAddress:
+        contractAddress[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
+          .accountProxy,
+    });
+
+  const createAccount = useCallback(async () => {
+    if (!tokenboundClient || !address) return;
+    try {
+      const transaction = await tokenboundClient.prepareCreateAccount({
+        tokenContract: contract.address as Address,
+        tokenId: `${tokenId}`,
+        implementationAddress:
+          contractAddress[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
+            .accountProxy,
+      });
+
+      const txHash = await walletClient.sendTransaction({
+        ...transaction,
+        account: address,
+      });
+      setTxHash(txHash);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [tokenboundClient]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      const tbaAddress = tokenboundClient?.getAccount({
+        tokenContract: contract.address as Address,
+        tokenId: `${tokenId}`,
+        implementationAddress:
+          contractAddress[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
+            .accountProxy,
+      });
+      toast({
+        title: "Successfully created account",
+        description: (
+          <div>
+            TBA successfully deployed, address:{" "}
+            <span className="font-mono">{tbaAddress}</span>
+          </div>
+        ),
+      });
+    } else if (isLoading) {
+      toast({
+        title: "Waiting for transaction",
+        description: (
+          <div>
+            Transaction hash: <span className="font-mono">{txHash}</span>
+          </div>
+        ),
+      });
+    }
+  }, [txHash, isLoading]);
 
   return (
     <div className="col-span-1">
@@ -61,7 +126,10 @@ export function NFTCollectionItem({
         )}
       </div>
       <div className="space-x-8 pb-4 pt-6 flex justify-center">
-        <Button disabled={!write} onClick={() => write?.()}>
+        <Button
+          disabled={tokenboundClient === undefined}
+          onClick={() => createAccount()}
+        >
           Mint TBA
         </Button>
         <Button>Sponsorships</Button>

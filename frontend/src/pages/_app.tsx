@@ -1,4 +1,5 @@
 import "./globals.css";
+import "@rainbow-me/rainbowkit/styles.css";
 
 import { Navbar } from "@/components/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -10,15 +11,30 @@ import { Inter } from "next/font/google";
 import { goerli, polygon, polygonMumbai } from "viem/chains";
 import { WagmiConfig, configureChains, createConfig, mainnet } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
+import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { alchemyProvider } from "wagmi/providers/alchemy";
+import { Toaster } from "@/components/ui/toaster";
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [mainnet, goerli, polygon, polygonMumbai],
-  [publicProvider()]
+const { chains, publicClient } = configureChains(
+  [polygonMumbai, polygon],
+  [
+    publicProvider(),
+    alchemyProvider({
+      apiKey: process.env.POLYGON_TESTNET_ALCHEMY_API_KEY!,
+    }),
+  ]
 );
+
+const { connectors } = getDefaultWallets({
+  appName: "Programmatic NFTs",
+  projectId: process.env.WALLET_CONNECT_PROJECT_ID!,
+  chains,
+});
 
 const config = createConfig({
   publicClient,
-  webSocketPublicClient,
+  connectors,
+  autoConnect: true,
 });
 
 const queryClient = new QueryClient();
@@ -37,10 +53,13 @@ export default function App({ Component, pageProps }: AppProps) {
     <div className={inter.className}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <WagmiConfig config={config}>
-          <QueryClientProvider client={queryClient}>
-            <Navbar />
-            <Component {...pageProps} />
-          </QueryClientProvider>{" "}
+          <RainbowKitProvider chains={chains}>
+            <QueryClientProvider client={queryClient}>
+              <Navbar />
+              <Toaster />
+              <Component {...pageProps} />
+            </QueryClientProvider>
+          </RainbowKitProvider>
         </WagmiConfig>
       </ThemeProvider>
     </div>

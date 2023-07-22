@@ -15,15 +15,17 @@ contract DeployAccountSponsorable is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        ERC6551Registry registry = new ERC6551Registry();
-        console.log("Registry address", address(registry));
+        // ERC6551Registry registry = new ERC6551Registry();
+        // console.log("Registry address", address(registry));
 
-        EntryPoint entryPoint = new EntryPoint();
-        AccountGuardian guardian = new AccountGuardian();
+        // EntryPoint entryPoint = new EntryPoint();
+        // AccountGuardian guardian = new AccountGuardian();
 
         AccountSponsorable implementation = new AccountSponsorable(
-            address(guardian),
-            address(entryPoint)
+            0xA578341F43F6CFcb5D871e827cebaB9bc7dAb150,
+            0xb9491f0aB924a1D9D565a4105123919F010a760a
+            // address(guardian),
+            // address(entryPoint)
         );
 
         AccountProxy accountProxy = new AccountProxy{

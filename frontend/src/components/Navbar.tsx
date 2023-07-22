@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -10,8 +9,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Sun, Moon } from "lucide-react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 import { Wallet } from "./Wallet";
 
 const links = [
@@ -66,6 +67,7 @@ export function Navbar() {
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
           </Button>
+          {/* <ConnectButton /> */}
           <Wallet />
         </div>
         <Sheet>

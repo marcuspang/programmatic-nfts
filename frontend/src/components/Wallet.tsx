@@ -30,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { polygonMumbai } from "viem/chains";
 
 const connectedHandler: Web3AuthEventListener = (data) =>
   console.log("CONNECTED", data);
@@ -63,6 +64,11 @@ const openloginAdapter = new OpenloginAdapter({
   },
 });
 
+const web3AuthModalPack = new Web3AuthModalPack({
+  txServiceUrl:
+    txServiceUrl[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN],
+});
+
 function generateConfig(theme?: string): Web3AuthOptions {
   return {
     clientId: process.env.WEB3AUTH_CLIENT_ID!,
@@ -80,15 +86,7 @@ function generateConfig(theme?: string): Web3AuthOptions {
     },
   };
 }
-
-const newWeb3AuthModalPack = new Web3AuthModalPack({
-  txServiceUrl:
-    txServiceUrl[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN],
-});
-
 export function Wallet() {
-  const [web3AuthModalPack, setWeb3AuthModalPack] =
-    useState<Web3AuthModalPack>();
   const [safeAuthSignInResponse, setSafeAuthSignInResponse] =
     useState<AuthKitSignInData | null>(null);
   const [userInfo, setUserInfo] = useState<Partial<UserInfo>>();
@@ -106,32 +104,25 @@ export function Wallet() {
   useEffect(() => {
     const options = generateConfig(theme);
 
-    newWeb3AuthModalPack
+    web3AuthModalPack
       .init({
         options,
+        // @ts-ignore
         adapters: [openloginAdapter],
         modalConfig,
       })
       .then(() => {
-        newWeb3AuthModalPack.subscribe(
-          ADAPTER_EVENTS.CONNECTED,
-          connectedHandler
-        );
+        web3AuthModalPack.subscribe(ADAPTER_EVENTS.CONNECTED, connectedHandler);
 
-        newWeb3AuthModalPack.subscribe(
+        web3AuthModalPack.subscribe(
           ADAPTER_EVENTS.DISCONNECTED,
           disconnectedHandler
         );
-
-        setWeb3AuthModalPack(newWeb3AuthModalPack);
       });
 
     return () => {
-      newWeb3AuthModalPack.unsubscribe(
-        ADAPTER_EVENTS.CONNECTED,
-        connectedHandler
-      );
-      newWeb3AuthModalPack.unsubscribe(
+      web3AuthModalPack.unsubscribe(ADAPTER_EVENTS.CONNECTED, connectedHandler);
+      web3AuthModalPack.unsubscribe(
         ADAPTER_EVENTS.DISCONNECTED,
         disconnectedHandler
       );
@@ -152,7 +143,9 @@ export function Wallet() {
     const signInInfo = await web3AuthModalPack.signIn();
     const userInfo = await web3AuthModalPack.getUserInfo();
 
-    connect({});
+    connect({
+      chainId: polygonMumbai.id,
+    });
 
     setSafeAuthSignInResponse(signInInfo);
     setUserInfo(userInfo || undefined);
@@ -172,15 +165,13 @@ export function Wallet() {
   return !!provider ? (
     <div className="flex items-center">
       <DropdownMenu>
-        <DropdownMenuTrigger>
-          <Button className="font-mono">
-            {!isError
-              ? `${data?.slice(0, 10)}...`
-              : `${safeAuthSignInResponse?.eoa.slice(0, 10)}...` ||
-                userInfo?.name ||
-                userInfo?.email}
-            <ChevronDown />
-          </Button>
+        <DropdownMenuTrigger className="font-mono flex">
+          {!isError
+            ? `${data?.slice(0, 10)}...`
+            : `${safeAuthSignInResponse?.eoa.slice(0, 10)}...` ||
+              userInfo?.name ||
+              userInfo?.email}
+          <ChevronDown />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="px-2">
           <DropdownMenuLabel>
