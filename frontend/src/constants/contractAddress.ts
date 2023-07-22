@@ -28,6 +28,8 @@ export const CONTRACT_ADDRESS: Record<number, Record<string, Address>> = {
     accountGuardian: "0x2D4d71C69b5631b557a4de7bD8aF82e2202da856",
     accountSponsorable: "0x5cc93ea88E3A114D586263E8B42e2c49d3943092",
     accountProxy: "0xee74464671085A16D7B780A21f285cEb306d434c",
+    svgLayerTransformer: "0xbEB637D81e11dCc81012bb2AAc79f2b2A2CC7A09",
+    smolBrainsNft: "0x3E1C87b735B5aD0b5BBb4666D853293F2b2cEA2c",
   },
   1: {
     registry: "0x02101dfB77FDE026414827Fdc604ddAF224F0921",
