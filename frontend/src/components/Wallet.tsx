@@ -1,5 +1,7 @@
+import { chainIds } from "@/constants/chainIds";
 import { chainRpcPrefix } from "@/constants/chainRpcPrefix";
 import { txServiceUrl } from "@/constants/txServiceUrl";
+import { isTestnet } from "@/lib/isTestnet";
 import {
   AuthKitSignInData,
   Web3AuthEventListener,
@@ -17,6 +19,8 @@ import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { ChevronDown, LogOutIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { Address, useConnect, useEnsName } from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -26,15 +30,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import {
-  Address,
-  useAccount,
-  useConnect,
-  useEnsAddress,
-  useEnsName,
-} from "wagmi";
-import { InjectedConnector } from "wagmi/connectors/injected";
-import { chainIds } from "@/constants/chainIds";
 
 const connectedHandler: Web3AuthEventListener = (data) =>
   console.log("CONNECTED", data);
@@ -42,9 +37,7 @@ const disconnectedHandler: Web3AuthEventListener = (data) =>
   console.log("DISCONNECTED", data);
 
 // TODO: setup with other EVM chains
-const CURRENT_CHAIN: "polygon" | "eth" = "polygon";
-
-const isTestnet = process.env.NODE_ENV === "development";
+export const CURRENT_CHAIN: "polygon" | "eth" | "zkPolygon" = "polygon";
 
 const modalConfig = {
   [WALLET_ADAPTERS.TORUS_EVM]: {
@@ -73,13 +66,13 @@ const openloginAdapter = new OpenloginAdapter({
 function generateConfig(theme?: string): Web3AuthOptions {
   return {
     clientId: process.env.WEB3AUTH_CLIENT_ID!,
-    web3AuthNetwork: isTestnet ? "testnet" : "mainnet",
+    web3AuthNetwork: isTestnet() ? "testnet" : "mainnet",
     chainConfig: {
       chainNamespace: CHAIN_NAMESPACES.EIP155,
-      chainId: chainIds[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN],
+      chainId: chainIds[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN],
       rpcTarget: `${
-        chainRpcPrefix[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN]
-      }${CURRENT_CHAIN !== "polygon" ? process.env.INFURA_KEY! : ""}`,
+        chainRpcPrefix[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN]
+      }${process.env.INFURA_KEY!}`,
     },
     uiConfig: {
       theme: theme === "dark" || theme === "light" ? theme : "dark",
@@ -89,7 +82,8 @@ function generateConfig(theme?: string): Web3AuthOptions {
 }
 
 const newWeb3AuthModalPack = new Web3AuthModalPack({
-  txServiceUrl: txServiceUrl[isTestnet ? "testnet" : "mainnet"][CURRENT_CHAIN],
+  txServiceUrl:
+    txServiceUrl[isTestnet() ? "testnet" : "mainnet"][CURRENT_CHAIN],
 });
 
 export function Wallet() {
@@ -105,7 +99,7 @@ export function Wallet() {
   const { connect, reset } = useConnect({
     connector: new InjectedConnector(),
   });
-  const { data } = useEnsName({
+  const { data, isError } = useEnsName({
     address: safeAuthSignInResponse?.eoa as Address | undefined,
   });
 
@@ -179,8 +173,12 @@ export function Wallet() {
     <div className="flex items-center">
       <DropdownMenu>
         <DropdownMenuTrigger>
-          <Button>
-            {data?.slice(0, 10) + "..." || userInfo?.name || userInfo?.email}
+          <Button className="font-mono">
+            {!isError
+              ? `${data?.slice(0, 10)}...`
+              : `${safeAuthSignInResponse?.eoa.slice(0, 10)}...` ||
+                userInfo?.name ||
+                userInfo?.email}
             <ChevronDown />
           </Button>
         </DropdownMenuTrigger>
@@ -191,7 +189,11 @@ export function Wallet() {
             </span>{" "}
             <br />
             <span className="font-mono">
-              {data || userInfo?.name || userInfo?.email}
+              {!isError
+                ? data
+                : safeAuthSignInResponse?.eoa ||
+                  userInfo?.name ||
+                  userInfo?.email}
             </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
