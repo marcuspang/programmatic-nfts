@@ -13,11 +13,9 @@ contract MockApes is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        MockERC721 tokenCollection = MockERC721(
-            0x496AEbf46C832A371E63eDAc098b64a97AA6cf5c
-        );
+        MockERC721 tokenCollection = new MockERC721();
 
-        for (uint256 i = 2; i < 15; i++) {
+        for (uint256 i = 0; i < 10; i++) {
             tokenCollection.mint(
                 0x7730B4Cdc1B1E7a33A309AB7205411faD009C106,
                 i,
@@ -27,10 +25,10 @@ contract MockApes is Script {
 
         // console.log("721 address", address(tokenCollection));
 
-        // new StringInjectTransformer(
-        //     "0000,0000,0000,0016,",
-        //     "0000,0000,0000,0052,"
-        // );
+        new StringInjectTransformer(
+            "0000,0000,0000,0016,",
+            "0000,0000,0000,0052,"
+        );
 
         vm.stopBroadcast();
     }

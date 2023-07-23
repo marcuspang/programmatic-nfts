@@ -23,6 +23,18 @@ export const CONTRACT_ADDRESS: Record<
     apeTokenCollection: "0x496AEbf46C832A371E63eDAc098b64a97AA6cf5c",
     stringInjectTransformer: "0x81610B0d990F56fF8Cc46FeeB3e61210CFC33F57",
   },
+  59140: {
+    registry: "0x31933694Ee18C19E69434134642A18C0644905fd",
+    entryPoint: "0x5cc93ea88E3A114D586263E8B42e2c49d3943092",
+    accountGuardian: "0x3AaE752C978108740A179e1Dd9972925ea97F18c",
+    accountSponsorable: "0x91739F200748050B775aDc087950270a479c9AF5",
+    accountProxy: "0x53287441C44Ae6E287A286B227C701C636255d26",
+    // svgLayerTransformer: "0xeeBC73bE721b3DdeBEAff608654263d382DF3003",
+    svgLayerTransformer: "",
+    tokenCollection: "",
+    apeTokenCollection: "0x31933694Ee18C19E69434134642A18C0644905fd",
+    stringInjectTransformer: "0x215D52c541fF233f3Df2E5a3561822797f759428",
+  },
   1101: {
     registry: undefined,
     entryPoint: undefined,
