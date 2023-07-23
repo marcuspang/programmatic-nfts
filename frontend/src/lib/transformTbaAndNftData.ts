@@ -1,6 +1,6 @@
 import { Network, OwnedNftsResponse } from "alchemy-sdk";
 import { mainnet } from "wagmi";
-import { goerli, polygonMumbai } from "viem/chains";
+import { goerli, polygon, polygonMumbai } from "viem/chains";
 
 export function transformTbaAndNftData(
   nftData: Record<string, OwnedNftsResponse>,
@@ -9,7 +9,6 @@ export function transformTbaAndNftData(
 ) {
   // Airstack only has polygon / eth mainnet 6551 tracking
   return Object.keys(nftData).flatMap((network) => {
-    console.log({ network });
     if (network === Network.ETH_MAINNET) {
       return nftData[Network.ETH_MAINNET].ownedNfts.map((nft) => {
         let tbaAddress: string | undefined;
@@ -38,7 +37,7 @@ export function transformTbaAndNftData(
           }
         });
 
-        return { ...nft, tbaAddress, chain: polygonMumbai.id };
+        return { ...nft, tbaAddress, chain: polygon.id };
       });
     }
     // Everything else is goerli

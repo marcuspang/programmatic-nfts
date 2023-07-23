@@ -5,10 +5,16 @@ import { MoveRight } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Address, createWalletClient, custom, http } from "viem";
-import { useAccount, useNetwork, useWaitForTransaction } from "wagmi";
+import {
+  useAccount,
+  useNetwork,
+  useSwitchNetwork,
+  useWaitForTransaction,
+} from "wagmi";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 import { Badge } from "./ui/badge";
+import { goerli } from "viem/chains";
 
 interface NFTCollectionItemProps extends OwnedNft {
   tbaAddress?: string;
@@ -39,29 +45,29 @@ export function NFTCollectionItem({
 
   const [txHash, setTxHash] = useState<string>();
 
-  const walletClient = createWalletClient({
-    chain,
-    account: address,
-    // @ts-ignore
-    transport: window.ethereum ? custom(window.ethereum) : http(),
-  });
   const { isLoading, isSuccess } = useWaitForTransaction({
     hash: txHash as Address,
     enabled: txHash !== undefined,
   });
-
-  const tokenboundClient =
-    chain &&
-    CONTRACT_ADDRESS[chainId]?.accountProxy &&
-    new TokenboundClient({
-      walletClient,
-      chainId: chain?.id,
-      implementationAddress: CONTRACT_ADDRESS[chainId]?.accountProxy,
-    });
+  const { switchNetworkAsync } = useSwitchNetwork();
 
   const createAccount = useCallback(async () => {
-    if (!tokenboundClient || !address) return;
+    if (!chain || !address || !switchNetworkAsync) return;
     try {
+      if (chain?.id !== chainId) {
+        await switchNetworkAsync?.(chainId);
+      }
+      const walletClient = createWalletClient({
+        chain,
+        account: address,
+        // @ts-ignore
+        transport: window.ethereum ? custom(window.ethereum) : http(),
+      });
+      const tokenboundClient = new TokenboundClient({
+        walletClient,
+        chainId: chain?.id,
+        implementationAddress: CONTRACT_ADDRESS[chain?.id]?.accountProxy,
+      });
       const transaction = await tokenboundClient.prepareCreateAccount({
         tokenContract: contract.address as Address,
         tokenId: `${tokenId}`,
@@ -81,11 +87,22 @@ export function NFTCollectionItem({
       });
       console.error(err);
     }
-  }, [tokenboundClient]);
+  }, [chainId]);
 
   useEffect(() => {
     if (chain) {
       if (isSuccess) {
+        const walletClient = createWalletClient({
+          chain,
+          account: address,
+          // @ts-ignore
+          transport: window.ethereum ? custom(window.ethereum) : http(),
+        });
+        const tokenboundClient = new TokenboundClient({
+          walletClient,
+          chainId: chain?.id,
+          implementationAddress: CONTRACT_ADDRESS[chain?.id]?.accountProxy,
+        });
         const tbaAddress = tokenboundClient?.getAccount({
           tokenContract: contract.address as Address,
           tokenId: `${tokenId}`,
@@ -125,11 +142,13 @@ export function NFTCollectionItem({
           src={transformTokenUri(rawMetadata?.image)}
           alt={rawMetadata?.description || description}
         />
-        <Badge className="absolute top-[5%] left-[5%]">{chainId}</Badge>
+        <Badge className="absolute top-[5%] left-[5%]">
+          {chainId} {chainId === goerli.id && "- No TBA indexing yet!"}
+        </Badge>
       </div>
       <div className="space-x-6 pb-4 pt-6 flex justify-center">
         <Button
-          disabled={tbaAddress !== undefined || tokenboundClient === undefined}
+          disabled={tbaAddress !== undefined}
           onClick={() => createAccount()}
         >
           {tbaAddress !== undefined ? "TBA Minted!" : "Mint TBA"}
@@ -141,7 +160,7 @@ export function NFTCollectionItem({
           {tbaAddress === undefined ? (
             "Not Sponsorable!"
           ) : (
-            <Link href={`/${tbaAddress}/sponsorship`}>
+            <Link href={`/sponsorship/${tbaAddress}/${chainId}`}>
               Sponsorships <MoveRight className="w-4 h-4 ml-2" />
             </Link>
           )}

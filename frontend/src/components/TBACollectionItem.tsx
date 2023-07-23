@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 
 interface TBACollectionItemProps extends OwnedNft {
   tbaAddress?: string;
+  chain: number;
 }
 
 function transformTokenUri(uri?: string) {
@@ -18,6 +19,7 @@ function transformTokenUri(uri?: string) {
 export function TBACollectionItem({
   rawMetadata,
   description,
+  chain,
   tbaAddress,
 }: TBACollectionItemProps) {
   if (!tbaAddress) {
@@ -41,7 +43,7 @@ export function TBACollectionItem({
           </Link>
         </Button>
         <Button asChild>
-          <Link href={`/${tbaAddress}/sponsorship`}>
+          <Link href={`/sponsorship/${tbaAddress}/${chain}`}>
             View Sponsorships <MoveRight className="w-4 h-4 ml-2" />
           </Link>
         </Button>

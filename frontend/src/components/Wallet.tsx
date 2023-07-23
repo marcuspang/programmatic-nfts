@@ -1,6 +1,5 @@
 import { CHAIN_RPC_PREFIX } from "@/constants/chainRpcPrefix";
 import { TX_SERVICE_URL } from "@/constants/txServiceUrl";
-import { isTestnet } from "@/lib/isTestnet";
 import {
   AuthKitSignInData,
   Web3AuthEventListener,
@@ -13,19 +12,14 @@ import {
   UserInfo,
   WALLET_ADAPTERS,
 } from "@web3auth/base";
-import { Web3AuthOptions } from "@web3auth/modal";
 import { OpenloginAdapter } from "@web3auth/openlogin-adapter";
 import { ChevronDown, LogOutIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import {
-  Address,
-  useConnect,
-  useEnsName,
-  useNetwork,
-  useSwitchNetwork,
-} from "wagmi";
+import { polygonMumbai } from "viem/chains";
+import { Address, useConnect, useEnsName, useNetwork } from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
+import { NetworkSwitch } from "./NetworkSwitch";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -35,8 +29,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { polygonMumbai } from "viem/chains";
-import { NetworkSwitch } from "./NetworkSwitch";
 
 const connectedHandler: Web3AuthEventListener = (data) =>
   console.log("CONNECTED", data);

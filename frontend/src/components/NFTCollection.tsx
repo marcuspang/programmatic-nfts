@@ -1,12 +1,11 @@
 import { getNfts } from "@/lib/alchemy";
+import { transformTbaAndNftData } from "@/lib/transformTbaAndNftData";
 import { useQuery } from "@tanstack/react-query";
-import { OwnedNftsResponse } from "alchemy-sdk";
 import { RotateCw } from "lucide-react";
 import { useEffect } from "react";
 import { useAccount, useNetwork } from "wagmi";
 import { useGetMainnetTbas, useGetPolygonTbas } from "../../hooks/useGetTbas";
 import { NFTCollectionItem } from "./NFTCollectionItem";
-import { transformTbaAndNftData } from "@/lib/transformTbaAndNftData";
 
 export function NFTCollection() {
   const { chain } = useNetwork();
@@ -16,12 +15,14 @@ export function NFTCollection() {
     queryFn: () => getNfts(address!, chain!.id),
     enabled: address !== undefined && chain !== undefined,
   });
-  console.log({ data });
   const { data: polygonTbaData, loading: polygonLoading } = useGetPolygonTbas();
   const { data: mainnetTbaData, loading: mainnetLoading } = useGetMainnetTbas();
+
   useEffect(() => {
     refetch();
   }, [address, chain]);
+
+  console.log({ polygonTbaData, mainnetTbaData });
 
   if (!address) {
     return <div>No tokens found.</div>;

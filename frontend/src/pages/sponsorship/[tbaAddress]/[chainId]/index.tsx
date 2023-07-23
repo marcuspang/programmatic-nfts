@@ -19,31 +19,45 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { isAddress } from "viem";
-import { Address, useAccount, useNetwork } from "wagmi";
+import { Address, useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 
 export default function SponsorshipPage() {
   const router = useRouter();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { chain } = useNetwork();
   const { toast } = useToast();
-  const { tbaAddress } = router.query;
+  const { tbaAddress, chainId } = router.query;
   const [finalImageUrl, setFinalImageUrl] = useState("");
   const [parsedTokenUri, setParsedTokenUri] = useState("");
+  const { switchNetwork } = useSwitchNetwork();
+
+  useEffect(() => {
+    if (
+      isConnected &&
+      chain &&
+      chain.id &&
+      chainId !== undefined &&
+      chain.id !== +chainId.toString()
+    ) {
+      switchNetwork?.(+chainId?.toString());
+    }
+  }, [chain, chainId, isConnected, switchNetwork]);
 
   const { data: tokenUri } = useAccountSponsorableTokenUri({
     account: address,
     address: tbaAddress as Address,
-    chainId: chain?.id,
+    chainId: +chainId?.toString()!,
     enabled:
       address !== undefined &&
       tbaAddress !== undefined &&
       isAddress(tbaAddress.toString()) &&
       chain !== undefined,
   });
+  console.log({ chainId, tbaAddress, address });
   const { data: isSponsorable } = useAccountSponsorableIsSponsorable({
     account: address,
     address: tbaAddress as Address,
-    chainId: chain?.id,
+    chainId: +chainId?.toString()!,
     enabled:
       address !== undefined &&
       tbaAddress !== undefined &&
@@ -54,12 +68,12 @@ export default function SponsorshipPage() {
   const { config } = usePrepareAccountSponsorableSetIsSponsorable({
     account: address,
     address: tbaAddress as Address,
-    chainId: chain?.id,
+    chainId: +chainId?.toString()!,
     enabled:
       address !== undefined &&
       tbaAddress !== undefined &&
       isAddress(tbaAddress.toString()) &&
-      Boolean(chain) &&
+      chainId !== undefined &&
       isSponsorable !== undefined,
     args: [true],
   });

@@ -1,6 +1,5 @@
-import { Alchemy, Network } from "alchemy-sdk";
+import { Network } from "alchemy-sdk";
 import type { Address } from "viem";
-import { polygonMumbai } from "viem/chains";
 import { AlchemyMultichainClient } from "./alchemyMultichainClient";
 
 const settings = {
