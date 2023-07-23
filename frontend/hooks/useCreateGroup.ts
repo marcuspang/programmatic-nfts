@@ -45,7 +45,7 @@ interface UseCreateGroupProps {
   chainId: number;
   groupDescription: string;
   tokenURI: string;
-  walletClient: PushAPI.SignerType;
+  walletClient: any;
 }
 
 export function useCreateGroup(props: UseCreateGroupProps) {

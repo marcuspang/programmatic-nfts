@@ -27,8 +27,8 @@ export default function ChatPage() {
   const { data: walletClient } = useWalletClient();
 
   function createChatGroup() {
-    const provider = new ethers.providers.Web3Provider(window?.ethereum, "any");
-    const signer = provider.getSigner();
+    // const provider = new ethers.providers.Web3Provider(window?.ethereum, "any");
+    // const signer = provider.getSigner();
 
     createGroup({
       chainId: +chainId?.toString()!,
@@ -36,7 +36,7 @@ export default function ChatPage() {
       groupDescription: "",
       tokenURI: tokenUri!,
       userAddress: address?.toString()!,
-      walletClient: signer,
+      walletClient: walletClient!,
     });
   }
 
