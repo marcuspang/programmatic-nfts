@@ -112,7 +112,9 @@ contract AccountSponsorable is Account, IERC6551AccountMetadata {
 
         sponsorships[sponsorshipId].isApproved = false;
         // transfer the sponsorship fee to owner
-        (bool success, ) = address(this).call{value: msg.value}("");
+        (bool success, ) = sponsorships[sponsorshipId].sponsor.call{
+            value: msg.value
+        }("");
         if (!success) {
             revert FailToTransferFee();
         }
