@@ -8,6 +8,7 @@ const nextConfig = {
       process.env.POLYGON_TESTNET_ALCHEMY_API_KEY,
     POLYGON_ALCHEMY_API_KEY: process.env.POLYGON_ALCHEMY_API_KEY,
     WALLET_CONNECT_PROJECT_ID: process.env.WALLET_CONNECT_PROJECT_ID,
+    GOERLI_ALCHEMY_API_KEY: process.env.GOERLI_ALCHEMY_API_KEY,
   },
   reactStrictMode: true,
   webpack: (config) => {

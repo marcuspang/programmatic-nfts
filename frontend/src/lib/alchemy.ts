@@ -1,27 +1,42 @@
 import { Alchemy, Network } from "alchemy-sdk";
 import type { Address } from "viem";
 import { polygonMumbai } from "viem/chains";
+import { AlchemyMultichainClient } from "./alchemyMultichainClient";
 
-export function getNfts(address: Address, chainId: number) {
-  const settings = {
-    apiKey:
-      chainId === polygonMumbai.id
-        ? process.env.POLYGON_TESTNET_ALCHEMY_API_KEY
-        : process.env.POLYGON_ALCHEMY_API_KEY,
-    network:
-      chainId === polygonMumbai.id
-        ? Network.MATIC_MUMBAI
-        : Network.MATIC_MAINNET,
+const settings = {
+  apiKey: process.env.POLYGON_ALCHEMY_API_KEY,
+  network: Network.MATIC_MAINNET,
+};
+const overrides = {
+  [Network.MATIC_MUMBAI]: {
+    apiKey: process.env.POLYGON_TESTNET_ALCHEMY_API_KEY,
+    maxRetries: 10,
+  },
+  [Network.ETH_GOERLI]: { apiKey: process.env.GOERLI_ALCHEMY_API_KEY },
+};
+
+const alchemy = new AlchemyMultichainClient(settings, overrides);
+
+export async function getNfts(address: Address, chainId: number) {
+  const mumbaiNfts = await alchemy
+    .forNetwork(Network.MATIC_MUMBAI)
+    .nft.getNftsForOwner(address, {
+      contractAddresses: [
+        "0xcb25e9dcf86db259765ba7a986df142b41414036",
+        "0xdbf2138593aec61d55d86e80b8ed86d7b9ba51f5",
+        "0xec68056ad770e626662b1f74bc1e1291a17840ba",
+        "0x6E352E6C77262520C89e21bf13bf417Cee168986",
+      ],
+    });
+  const polygonNfts = await alchemy
+    .forNetwork(Network.MATIC_MAINNET)
+    .nft.getNftsForOwner(address);
+  const goerliNfts = await alchemy
+    .forNetwork(Network.ETH_GOERLI)
+    .nft.getNftsForOwner(address);
+  return {
+    [Network.MATIC_MUMBAI]: mumbaiNfts,
+    [Network.MATIC_MAINNET]: polygonNfts,
+    [Network.ETH_GOERLI]: goerliNfts,
   };
-
-  const alchemy = new Alchemy(settings);
-
-  return alchemy.nft.getNftsForOwner(address, {
-    contractAddresses: [
-      "0xcb25e9dcf86db259765ba7a986df142b41414036",
-      "0xdbf2138593aec61d55d86e80b8ed86d7b9ba51f5",
-      "0xec68056ad770e626662b1f74bc1e1291a17840ba",
-      "0x6E352E6C77262520C89e21bf13bf417Cee168986",
-    ],
-  });
 }

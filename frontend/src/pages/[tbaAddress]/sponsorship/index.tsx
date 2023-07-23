@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -13,7 +12,6 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   useAccountSponsorableIsSponsorable,
   useAccountSponsorableSetIsSponsorable,
-  useAccountSponsorableSponsorships,
   useAccountSponsorableTokenUri,
   usePrepareAccountSponsorableSetIsSponsorable,
 } from "@/lib/generated";
@@ -40,7 +38,7 @@ export default function SponsorshipPage() {
       address !== undefined &&
       tbaAddress !== undefined &&
       isAddress(tbaAddress.toString()) &&
-      Boolean(chain),
+      chain !== undefined,
   });
   const { data: isSponsorable } = useAccountSponsorableIsSponsorable({
     account: address,
@@ -50,7 +48,7 @@ export default function SponsorshipPage() {
       address !== undefined &&
       tbaAddress !== undefined &&
       isAddress(tbaAddress.toString()) &&
-      Boolean(chain),
+      chain !== undefined,
   });
 
   const { config } = usePrepareAccountSponsorableSetIsSponsorable({
@@ -128,10 +126,13 @@ export default function SponsorshipPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-120px)] container mt-12 grid grid-cols-5 gap-2">
+    <main className="min-h-[calc(100vh-120px)] container mt-12 lg:grid grid-cols-5 gap-2 mb-12">
       <div className="col-span-3 px-4">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl pb-4">
-          Your TBA Sponsorship
+        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl pb-4 flex items-center justify-between">
+          <span>Your TBA Sponsorship</span>
+          <Badge className="lg:hidden py-1">
+            scroll below to see your TBA!
+          </Badge>
         </h1>
         <p className="font-mono leading-7">{tbaAddress?.toString()}</p>
         <Button

@@ -1,9 +1,9 @@
 import { useAccount } from "wagmi";
 import { useQuery } from "@airstack/airstack-react";
 
-const query = `query MyQuery($owner: [Identity!]) {
+const query = `query MyQuery($owner: [Identity!], $blockchain: TokenBlockchain!) {
   TokenBalances(
-    input: {filter: {owner: {_in: $owner}}, blockchain: polygon, limit: 200}
+    input: {filter: {owner: {_in: $owner}}, blockchain: $blockchain, limit: 200}
   ) {
     TokenBalance {
       tokenNfts {
@@ -32,9 +32,15 @@ function transformTbaAddresses(data: any) {
   // }, []);
 }
 
-export const useGetTbas = () => {
+export const useGetPolygonTbas = () => {
   const { address } = useAccount();
-  const result = useQuery(query, { owner: address });
+  const result = useQuery(query, { owner: address, blockchain: "polygon" });
+
+  return { ...result, data: transformTbaAddresses(result.data) };
+};
+export const useGetMainnetTbas = () => {
+  const { address } = useAccount();
+  const result = useQuery(query, { owner: address, blockchain: "ethereum" });
 
   return { ...result, data: transformTbaAddresses(result.data) };
 };

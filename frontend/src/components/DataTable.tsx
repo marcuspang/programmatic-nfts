@@ -4,7 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,7 +37,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { Address, formatEther } from "viem";
-import { useAccount, useNetwork } from "wagmi";
+import { useAccount, useBlockNumber, useNetwork } from "wagmi";
 import {
   Tooltip,
   TooltipContent,
@@ -65,7 +65,7 @@ const generateColumns = (tbaAddress: Address) =>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger className="cursor-default">
-              {row.getValue("sponsor").slice(0, 6) + "..."}
+              {(row.getValue("sponsor") as string).slice(0, 6) + "..."}
             </TooltipTrigger>
             <TooltipContent>{row.getValue("sponsor")}</TooltipContent>
           </Tooltip>
@@ -76,7 +76,7 @@ const generateColumns = (tbaAddress: Address) =>
       accessorKey: "fee",
       header: () => <div>Fee (in ETH)</div>,
       cell: ({ row }) => {
-        const amount = row.getValue("fee");
+        const amount = row.getValue("fee") as bigint;
 
         return <div className="font-medium">{formatEther(amount)}</div>;
       },
@@ -135,6 +135,7 @@ function CheckboxForIsActive({
   tbaAddress: Address;
 }) {
   const { address } = useAccount();
+  const { data: blockNumber } = useBlockNumber();
   const { chain } = useNetwork();
   const { config } = usePrepareAccountSponsorableApproveSponsorship({
     account: address as Address,
@@ -150,8 +151,13 @@ function CheckboxForIsActive({
       account: address as Address,
       address: tbaAddress,
       chainId: chain?.id,
+      value: 0n,
       args: [BigInt(row.id || 0)],
-      enabled: chain !== undefined && !row.original.isApproved,
+      enabled:
+        chain !== undefined &&
+        !row.original.isApproved &&
+        blockNumber !== undefined &&
+        blockNumber < row.original.endBlock,
     });
   const {
     data: disapproveData,
@@ -202,9 +208,12 @@ function CheckboxForIsActive({
         if (!row.getValue("isApproved")) {
           write?.();
         } else {
-          disapprove?.write();
+          disapproveWrite?.();
         }
       }}
+      disabled={
+        blockNumber !== undefined && blockNumber > row.original.endBlock
+      }
       checked={row.getValue("isApproved")}
     />
   );

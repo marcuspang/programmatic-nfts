@@ -2,8 +2,7 @@ import "@biconomy/web3-auth/dist/src/style.css";
 
 import { isTestnet as checkIsTestnet } from "@/lib/isTestnet";
 import { init } from "@airstack/airstack-react";
-import SocialLogin from "@biconomy/web3-auth";
-import { useTheme } from "next-themes";
+// import SocialLogin from "@biconomy/web3-auth";
 import { ReactNode, createContext, useEffect, useState } from "react";
 import { goerli, polygon, polygonMumbai } from "viem/chains";
 import { WagmiConfig, configureChains, createConfig, mainnet } from "wagmi";
@@ -16,7 +15,7 @@ export type CustomChain = "polygon" | "eth" | "zkPolygon";
 export interface Web3ContextInterface {
   currentChain: CustomChain;
   isTestnet: boolean;
-  socialLogin?: SocialLogin;
+  // socialLogin?: SocialLogin;
 }
 
 const isTestnet = checkIsTestnet();
@@ -52,15 +51,13 @@ init(process.env.AIRSTACK_API_KEY!);
 
 export function Web3Provider({ children }: { children?: ReactNode }) {
   const [chain, setChain] = useState<CustomChain>("polygon");
-  const [socialLogin, setSocialLogin] = useState<SocialLogin>();
+  // const [socialLogin, setSocialLogin] = useState<SocialLogin>();
 
   useEffect(() => {
     if (window.document) {
-      setSocialLogin(new SocialLogin());
+      // setSocialLogin(new SocialLogin());
     }
   }, []);
-
-  useEf
 
   return (
     <WagmiConfig config={config}>
@@ -68,7 +65,7 @@ export function Web3Provider({ children }: { children?: ReactNode }) {
         value={{
           currentChain: chain,
           isTestnet,
-          socialLogin,
+          // socialLogin,
         }}
       >
         {children}

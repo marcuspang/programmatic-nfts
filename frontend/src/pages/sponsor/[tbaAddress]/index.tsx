@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,10 +22,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { CONTRACT_ADDRESS } from "@/constants/contractAddress";
 import {
   useAccountSponsorableAddSponsorship,
+  useAccountSponsorableIsSponsorable,
   usePrepareAccountSponsorableAddSponsorship,
 } from "@/lib/generated";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check } from "lucide-react";
+import { BadgeAlert, Check } from "lucide-react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -83,6 +86,17 @@ export default function SponsorTbaPage() {
   const sponsorshipAmount = form.watch("sponsorshipAmount");
   const transformerAddress = form.watch("transformerAddress");
 
+  const { data: isSponsorable } = useAccountSponsorableIsSponsorable({
+    account: address,
+    address: tbaAddress as Address,
+    chainId: chain?.id,
+    enabled:
+      address !== undefined &&
+      tbaAddress !== undefined &&
+      isAddress(tbaAddress.toString()) &&
+      chain !== undefined,
+  });
+
   const { config } = usePrepareAccountSponsorableAddSponsorship({
     address: tbaAddress as Address,
     account: address,
@@ -95,7 +109,6 @@ export default function SponsorTbaPage() {
       isAddress(tbaAddress.toString()) &&
       address !== undefined,
   });
-
   const {
     write,
     isSuccess,
@@ -139,10 +152,20 @@ export default function SponsorTbaPage() {
 
   return (
     <main className="flex min-h-[calc(100vh-120px)] flex-col items-center container my-12">
-      <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl pb-12">
+      <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-4xl pb-2">
         Sponsor a TBA
       </h1>
-      <Card>
+      <Badge
+        className={cn(
+          "mt-1 cursor-pointer",
+          isSponsorable
+            ? "bg-green-700 dark:bg-green-400 hover:bg-green-600"
+            : "bg-red-700 dark:bg-red-400 hover:bg-red-600"
+        )}
+      >
+        {isSponsorable ? "Sponsorships Active" : "Sponsorships Not Active"}
+      </Badge>
+      <Card className="mt-12">
         <CardHeader>
           <CardTitle>
             <span className="font-mono">{tbaAddress?.toString()}</span>
@@ -224,9 +247,16 @@ export default function SponsorTbaPage() {
                 )}
               />
             </CardContent>
-            <CardFooter>
+            <CardFooter className="space-x-4">
               <Button className="w-full" type="submit">
                 <Check className="mr-2 h-4 w-4" /> Submit
+              </Button>
+              <Button
+                className="w-full"
+                type="button"
+                onClick={() => router.back()}
+              >
+                Go Back
               </Button>
             </CardFooter>
           </form>

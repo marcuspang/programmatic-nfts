@@ -8,10 +8,11 @@ import { Address, createWalletClient, custom, http } from "viem";
 import { useAccount, useNetwork, useWaitForTransaction } from "wagmi";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
-import { base64url } from "@web3auth/openlogin-adapter";
+import { Badge } from "./ui/badge";
 
 interface NFTCollectionItemProps extends OwnedNft {
   tbaAddress?: string;
+  chain: number;
   refetch: () => void;
 }
 
@@ -27,6 +28,7 @@ export function NFTCollectionItem({
   rawMetadata,
   description,
   contract,
+  chain: chainId,
   tokenId,
   tbaAddress,
   refetch,
@@ -50,10 +52,11 @@ export function NFTCollectionItem({
 
   const tokenboundClient =
     chain &&
+    CONTRACT_ADDRESS[chainId]?.accountProxy &&
     new TokenboundClient({
       walletClient,
       chainId: chain?.id,
-      implementationAddress: CONTRACT_ADDRESS[chain.id].accountProxy,
+      implementationAddress: CONTRACT_ADDRESS[chainId]?.accountProxy,
     });
 
   const createAccount = useCallback(async () => {
@@ -62,7 +65,7 @@ export function NFTCollectionItem({
       const transaction = await tokenboundClient.prepareCreateAccount({
         tokenContract: contract.address as Address,
         tokenId: `${tokenId}`,
-        implementationAddress: CONTRACT_ADDRESS[chain.id].accountProxy,
+        implementationAddress: CONTRACT_ADDRESS[chainId]?.accountProxy,
       });
 
       const txHash = await walletClient.sendTransaction({
@@ -86,14 +89,16 @@ export function NFTCollectionItem({
         const tbaAddress = tokenboundClient?.getAccount({
           tokenContract: contract.address as Address,
           tokenId: `${tokenId}`,
-          implementationAddress: CONTRACT_ADDRESS[chain.id].accountProxy,
+          implementationAddress: CONTRACT_ADDRESS[chain.id]?.accountProxy,
         });
         toast({
           title: "Successfully created account",
           description: (
             <div>
               TBA successfully deployed, address:{" "}
-              <span className="font-mono whitespace-[initial]">{tbaAddress}</span>
+              <span className="font-mono whitespace-[initial]">
+                {tbaAddress}
+              </span>
             </div>
           ),
         });
@@ -103,7 +108,8 @@ export function NFTCollectionItem({
           title: "Waiting for transaction",
           description: (
             <div>
-              Transaction hash: <span className="font-mono whitespace-[initial]">{txHash}</span>
+              Transaction hash:{" "}
+              <span className="font-mono whitespace-[initial]">{txHash}</span>
             </div>
           ),
         });
@@ -113,12 +119,13 @@ export function NFTCollectionItem({
 
   return (
     <div className="col-span-1">
-      <div className="bg-stone-900 rounded-lg overflow-hidden">
+      <div className="bg-stone-900 rounded-lg overflow-hidden relative">
         <img
           className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
           src={transformTokenUri(rawMetadata?.image)}
           alt={rawMetadata?.description || description}
         />
+        <Badge className="absolute top-[5%] left-[5%]">{chainId}</Badge>
       </div>
       <div className="space-x-6 pb-4 pt-6 flex justify-center">
         <Button
@@ -127,15 +134,18 @@ export function NFTCollectionItem({
         >
           {tbaAddress !== undefined ? "TBA Minted!" : "Mint TBA"}
         </Button>
-        {tbaAddress === undefined ? (
-          <Button disabled>Not Sponsorable!</Button>
-        ) : (
-          <Button disabled={tbaAddress === undefined} asChild>
+        <Button
+          disabled={tbaAddress === undefined}
+          asChild={tbaAddress !== undefined}
+        >
+          {tbaAddress === undefined ? (
+            "Not Sponsorable!"
+          ) : (
             <Link href={`/${tbaAddress}/sponsorship`}>
               Sponsorships <MoveRight className="w-4 h-4 ml-2" />
             </Link>
-          </Button>
-        )}
+          )}
+        </Button>
       </div>
     </div>
   );

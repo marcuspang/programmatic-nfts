@@ -1,28 +1,11 @@
 import { getNfts } from "@/lib/alchemy";
 import { useQuery } from "@tanstack/react-query";
-import { OwnedNftsResponse } from "alchemy-sdk";
 import { RotateCw } from "lucide-react";
 import { useEffect } from "react";
 import { useAccount, useNetwork } from "wagmi";
-import { useGetTbas } from "../../hooks/useGetTbas";
+import { useGetMainnetTbas, useGetPolygonTbas } from "../../hooks/useGetTbas";
 import { TBACollectionItem } from "./TBACollectionItem";
-
-function transformTbaAndNftData(nftData: OwnedNftsResponse, tbaData: any) {
-  return nftData.ownedNfts.map((nft) => {
-    let tbaAddress: string | undefined;
-    tbaData.forEach((tba: any) => {
-      if (
-        nft.tokenId === tba.tokenId &&
-        nft.contract.address === tba.tokenAddress
-      ) {
-        tbaAddress = tba.tokenNfts.erc6551Accounts[0].address.addresses[0];
-        return;
-      }
-    });
-
-    return { ...nft, tbaAddress };
-  });
-}
+import { transformTbaAndNftData } from "../lib/transformTbaAndNftData";
 
 export function TBACollection() {
   const { chain } = useNetwork();
@@ -32,7 +15,8 @@ export function TBACollection() {
     queryFn: () => getNfts(address!, chain!.id),
     enabled: address !== undefined && chain !== undefined,
   });
-  const { data: tbaData, loading } = useGetTbas();
+  const { data: polygonTbaData, loading: polygonLoading } = useGetPolygonTbas();
+  const { data: mainnetTbaData, loading: mainnetLoading } = useGetMainnetTbas();
 
   useEffect(() => {
     refetch();
@@ -42,16 +26,16 @@ export function TBACollection() {
     return <div>No tokens found.</div>;
   }
 
-  if (isLoading || loading) {
+  if (isLoading || polygonLoading || mainnetLoading) {
     return <RotateCw className="animate-spin" />;
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {data !== undefined &&
-        tbaData !== undefined &&
-        transformTbaAndNftData(data, tbaData)
-          .filter((nft) => nft.tbaAddress !== undefined)
+        polygonTbaData !== undefined &&
+        transformTbaAndNftData(data, polygonTbaData, mainnetTbaData)
+          .filter((nft) => nft.tokenType !== "ERC1155")
           .map((nft, index) => <TBACollectionItem key={index} {...nft} />)}
     </div>
   );
