@@ -5,16 +5,12 @@ import { MoveRight } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Address, createWalletClient, custom, http } from "viem";
-import {
-  useAccount,
-  useNetwork,
-  useSwitchNetwork,
-  useWaitForTransaction,
-} from "wagmi";
+import { useAccount, useNetwork, useWaitForTransaction } from "wagmi";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 import { Badge } from "./ui/badge";
-import { goerli } from "viem/chains";
+import { ToastAction } from "./ui/toast";
+import { useRouter } from "next/router";
 
 interface NFTCollectionItemProps extends OwnedNft {
   tbaAddress?: string;
@@ -36,38 +32,40 @@ export function NFTCollectionItem({
   contract,
   chain: chainId,
   tokenId,
+  tokenUri,
   tbaAddress,
   refetch,
 }: NFTCollectionItemProps) {
   const { chain } = useNetwork();
   const { address } = useAccount();
+  const router = useRouter();
   const { toast } = useToast();
 
   const [txHash, setTxHash] = useState<string>();
 
+  const walletClient = createWalletClient({
+    chain,
+    account: address,
+    // @ts-ignore
+    transport: window.ethereum ? custom(window.ethereum) : http(),
+  });
   const { isLoading, isSuccess } = useWaitForTransaction({
     hash: txHash as Address,
     enabled: txHash !== undefined,
   });
-  const { switchNetworkAsync } = useSwitchNetwork();
+
+  const tokenboundClient =
+    chain &&
+    CONTRACT_ADDRESS[chainId]?.accountProxy &&
+    new TokenboundClient({
+      walletClient,
+      chainId: chain?.id,
+      implementationAddress: CONTRACT_ADDRESS[chainId]?.accountProxy,
+    });
 
   const createAccount = useCallback(async () => {
-    if (!chain || !address || !switchNetworkAsync) return;
+    if (!tokenboundClient || !address) return;
     try {
-      if (chain?.id !== chainId) {
-        await switchNetworkAsync?.(chainId);
-      }
-      const walletClient = createWalletClient({
-        chain,
-        account: address,
-        // @ts-ignore
-        transport: window.ethereum ? custom(window.ethereum) : http(),
-      });
-      const tokenboundClient = new TokenboundClient({
-        walletClient,
-        chainId: chain?.id,
-        implementationAddress: CONTRACT_ADDRESS[chain?.id]?.accountProxy,
-      });
       const transaction = await tokenboundClient.prepareCreateAccount({
         tokenContract: contract.address as Address,
         tokenId: `${tokenId}`,
@@ -87,22 +85,11 @@ export function NFTCollectionItem({
       });
       console.error(err);
     }
-  }, [chainId]);
+  }, [tokenboundClient]);
 
   useEffect(() => {
     if (chain) {
       if (isSuccess) {
-        const walletClient = createWalletClient({
-          chain,
-          account: address,
-          // @ts-ignore
-          transport: window.ethereum ? custom(window.ethereum) : http(),
-        });
-        const tokenboundClient = new TokenboundClient({
-          walletClient,
-          chainId: chain?.id,
-          implementationAddress: CONTRACT_ADDRESS[chain?.id]?.accountProxy,
-        });
         const tbaAddress = tokenboundClient?.getAccount({
           tokenContract: contract.address as Address,
           tokenId: `${tokenId}`,
@@ -117,6 +104,16 @@ export function NFTCollectionItem({
                 {tbaAddress}
               </span>
             </div>
+          ),
+          action: (
+            <ToastAction
+              altText="Go to TBA"
+              onClick={() =>
+                router.push(`/sponsorship/${tbaAddress}/${chainId}`)
+              }
+            >
+              View TBA page
+            </ToastAction>
           ),
         });
         refetch();
@@ -137,33 +134,41 @@ export function NFTCollectionItem({
   return (
     <div className="col-span-1">
       <div className="bg-stone-900 rounded-lg overflow-hidden relative">
-        <img
-          className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
-          src={transformTokenUri(rawMetadata?.image)}
-          alt={rawMetadata?.description || description}
-        />
-        <Badge className="absolute top-[5%] left-[5%]">
-          {chainId} {chainId === goerli.id && "- No TBA indexing yet!"}
-        </Badge>
+        {rawMetadata?.image === undefined ? (
+          <iframe
+            src={tokenUri?.gateway}
+            className="w-full h-full min-h-[400px]"
+          ></iframe>
+        ) : (
+          <img
+            className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
+            src={transformTokenUri(rawMetadata?.image)}
+            alt={rawMetadata?.description || description}
+          />
+        )}
+        <Badge className="absolute top-[5%] left-[5%]">{chainId}</Badge>
       </div>
       <div className="space-x-6 pb-4 pt-6 flex justify-center">
         <Button
-          disabled={tbaAddress !== undefined}
+          disabled={tbaAddress !== undefined || tokenboundClient === undefined}
           onClick={() => createAccount()}
         >
           {tbaAddress !== undefined ? "TBA Minted!" : "Mint TBA"}
         </Button>
-        <Button
-          disabled={tbaAddress === undefined}
-          asChild={tbaAddress !== undefined}
-        >
-          {tbaAddress === undefined ? (
-            "Not Sponsorable!"
-          ) : (
-            <Link href={`/sponsorship/${tbaAddress}/${chainId}`}>
-              Sponsorships <MoveRight className="w-4 h-4 ml-2" />
-            </Link>
-          )}
+        <Button asChild>
+          <Link
+            href={`/sponsorship/${
+              tbaAddress ||
+              tokenboundClient?.getAccount({
+                tokenContract: contract.address as Address,
+                tokenId: `${tokenId}`,
+                implementationAddress:
+                  CONTRACT_ADDRESS[chain?.id!]?.accountProxy,
+              })
+            }/${chainId}`}
+          >
+            Sponsorships <MoveRight className="w-4 h-4 ml-2" />
+          </Link>
         </Button>
       </div>
     </div>

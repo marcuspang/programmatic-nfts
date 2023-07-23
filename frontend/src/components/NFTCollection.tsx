@@ -22,8 +22,6 @@ export function NFTCollection() {
     refetch();
   }, [address, chain]);
 
-  console.log({ polygonTbaData, mainnetTbaData });
-
   if (!address) {
     return <div>No tokens found.</div>;
   }
@@ -32,8 +30,13 @@ export function NFTCollection() {
     return <RotateCw className="animate-spin" />;
   }
 
+  console.log({
+    a: transformTbaAndNftData(data, polygonTbaData, mainnetTbaData).filter(
+      (nft) => nft.tokenType !== "ERC1155"
+    ),
+  });
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-12">
       {data !== undefined &&
         polygonTbaData !== undefined &&
         mainnetTbaData !== undefined &&

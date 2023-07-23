@@ -61,7 +61,6 @@ const openloginAdapter = new OpenloginAdapter({
 
 export function Wallet() {
   const { chain, chains } = useNetwork();
-  console.log({ chains });
   const [safeAuthSignInResponse, setSafeAuthSignInResponse] =
     useState<AuthKitSignInData | null>(null);
   const [userInfo, setUserInfo] = useState<Partial<UserInfo>>();

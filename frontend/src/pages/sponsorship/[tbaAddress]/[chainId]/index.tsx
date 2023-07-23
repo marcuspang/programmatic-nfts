@@ -16,6 +16,7 @@ import {
   usePrepareAccountSponsorableSetIsSponsorable,
 } from "@/lib/generated";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { isAddress } from "viem";
@@ -24,8 +25,8 @@ import { Address, useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 export default function SponsorshipPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
-  const { chain } = useNetwork();
   const { toast } = useToast();
+  const { chain } = useNetwork();
   const { tbaAddress, chainId } = router.query;
   const [finalImageUrl, setFinalImageUrl] = useState("");
   const [parsedTokenUri, setParsedTokenUri] = useState("");
@@ -53,7 +54,6 @@ export default function SponsorshipPage() {
       isAddress(tbaAddress.toString()) &&
       chain !== undefined,
   });
-  console.log({ chainId, tbaAddress, address });
   const { data: isSponsorable } = useAccountSponsorableIsSponsorable({
     account: address,
     address: tbaAddress as Address,
@@ -90,15 +90,7 @@ export default function SponsorshipPage() {
     if (chain) {
       if (isSuccess) {
         toast({
-          title: "Successfully created sponsorship",
-          description: (
-            <div>
-              Sponsorship successfully created, address:{" "}
-              <span className="font-mono whitespace-[initial]">
-                {tbaAddress}
-              </span>
-            </div>
-          ),
+          title: "Successfully enabled sponsorships",
         });
       } else if (isLoading) {
         toast({
@@ -161,16 +153,31 @@ export default function SponsorshipPage() {
         >
           {isSponsorable ? "Sponsorable Enabled" : "Sponsorable Disabled"}
         </Button>
+        <Link href={`/sponsorship/${tbaAddress}/${chainId}/chat`}>
+          <Button
+            className="block mt-6 bg-purple-700 text-lg dark:bg-purple-500 hover:bg-purple-600"
+            size="lg"
+          >
+            Chat (powered by Push)
+          </Button>
+        </Link>
         <SponsorshipTables tbaAddress={tbaAddress?.toString()} />
       </div>
       {finalImageUrl ? (
         <div className="col-span-2 px-4 space-y-4">
           <div className="overflow-hidden">
-            <img
-              src={finalImageUrl}
-              className="hover:scale-[105%] transition-transform ease-in-out w-full"
-              alt="Your TBA image"
-            />
+            {tokenUri?.startsWith("https://") ? (
+              <iframe
+                src={tokenUri}
+                className="w-full h-full min-h-[400px]"
+              ></iframe>
+            ) : (
+              <img
+                src={finalImageUrl}
+                className="hover:scale-[105%] transition-transform ease-in-out w-full"
+                alt="Your TBA image"
+              />
+            )}
           </div>
           <Card>
             <CardHeader>
@@ -183,7 +190,7 @@ export default function SponsorshipPage() {
             <CardContent>
               <div className="overflow-auto">
                 <code className="whitespace-[initial]">
-                  {JSON.stringify(parsedTokenUri, null, 2)}
+                  {JSON.stringify(parsedTokenUri || tokenUri, null, 2)}
                 </code>
               </div>
             </CardContent>

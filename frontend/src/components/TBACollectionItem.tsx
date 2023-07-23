@@ -2,6 +2,8 @@ import { OwnedNft } from "alchemy-sdk";
 import { MoveRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
+import { goerli } from "viem/chains";
+import { Badge } from "./ui/badge";
 
 interface TBACollectionItemProps extends OwnedNft {
   tbaAddress?: string;
@@ -28,16 +30,19 @@ export function TBACollectionItem({
 
   return (
     <div className="col-span-1">
-      <div className="bg-stone-900 rounded-lg overflow-hidden">
+      <div className="bg-stone-900 rounded-lg overflow-hidden relative">
         <img
           className="hover:scale-[105%] transition-transform ease-in-out w-full h-full"
           src={transformTokenUri(rawMetadata?.image)}
           alt={rawMetadata?.description || description}
         />
+        <Badge className="absolute top-[5%] left-[5%]">
+          {chain} {chain === goerli.id && "- No TBA indexing yet!"}
+        </Badge>
       </div>
       <div className="space-x-6 pb-4 pt-6 flex justify-center">
         <Button asChild>
-          <Link href={`/sponsor/${tbaAddress}`}>
+          <Link href={`/sponsor/${tbaAddress}/${chain}`}>
             <Plus className="w-5 h-5 mr-1" />
             Sponsor
           </Link>

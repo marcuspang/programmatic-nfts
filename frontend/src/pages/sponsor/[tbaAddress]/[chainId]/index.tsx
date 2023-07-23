@@ -27,13 +27,28 @@ import {
 } from "@/lib/generated";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BadgeAlert, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Address, isAddress } from "viem";
-import { useAccount, useBlockNumber, useNetwork } from "wagmi";
+import { goerli } from "viem/chains";
+import {
+  useAccount,
+  useBlockNumber,
+  useNetwork,
+  useSwitchNetwork
+} from "wagmi";
 import * as z from "zod";
+
+const blockTime = (chainId: number) => {
+  switch (chainId) {
+    case goerli.id:
+      return 15;
+    default:
+      return 2;
+  }
+};
 
 const formSchema = z
   .object({
@@ -51,11 +66,12 @@ const formSchema = z
 
 export default function SponsorTbaPage() {
   const router = useRouter();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { data, isLoading } = useBlockNumber();
   const { chain } = useNetwork();
   const { toast } = useToast();
-  const { tbaAddress } = router.query;
+  const { tbaAddress, chainId } = router.query;
+  const { switchNetwork } = useSwitchNetwork();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -89,7 +105,7 @@ export default function SponsorTbaPage() {
   const { data: isSponsorable } = useAccountSponsorableIsSponsorable({
     account: address,
     address: tbaAddress as Address,
-    chainId: chain?.id,
+    chainId: +chainId?.toString()!,
     enabled:
       address !== undefined &&
       tbaAddress !== undefined &&
@@ -145,6 +161,18 @@ export default function SponsorTbaPage() {
       }
     }
   }, [sponsorshipData?.hash, isLoading]);
+
+  useEffect(() => {
+    if (
+      isConnected &&
+      chain &&
+      chain.id &&
+      chainId !== undefined &&
+      chain.id !== +chainId.toString()
+    ) {
+      switchNetwork?.(+chainId?.toString());
+    }
+  }, [chain, chainId, isConnected, switchNetwork]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     write?.();
@@ -204,7 +232,14 @@ export default function SponsorTbaPage() {
                         <Input type="number" {...field} />
                       </FormControl>
                       <span className="text-muted-foreground text-sm">
-                        ~{+((endBlock - startBlock) * 2).toString()}s
+                        ~
+                        {
+                          +(
+                            (endBlock - startBlock) *
+                            blockTime(+chainId?.toString()!)
+                          ).toString()
+                        }
+                        s
                       </span>
                     </div>
                     <FormDescription>

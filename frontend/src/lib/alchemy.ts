@@ -1,6 +1,8 @@
 import { Network } from "alchemy-sdk";
 import type { Address } from "viem";
 import { AlchemyMultichainClient } from "./alchemyMultichainClient";
+import { CONTRACT_ADDRESS } from "@/constants/contractAddress";
+import { goerli } from "viem/chains";
 
 const settings = {
   apiKey: process.env.POLYGON_ALCHEMY_API_KEY,
@@ -32,7 +34,12 @@ export async function getNfts(address: Address, chainId: number) {
     .nft.getNftsForOwner(address);
   const goerliNfts = await alchemy
     .forNetwork(Network.ETH_GOERLI)
-    .nft.getNftsForOwner(address);
+    .nft.getNftsForOwner(address, {
+      contractAddresses: [
+        "0xFA1F0dF0db6CbAbC1DEbA9b579c9ca1cB14b6595",
+        "0x496AEbf46C832A371E63eDAc098b64a97AA6cf5c",
+      ],
+    });
   return {
     [Network.MATIC_MUMBAI]: mumbaiNfts,
     [Network.MATIC_MAINNET]: polygonNfts,
