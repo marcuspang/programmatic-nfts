@@ -9,12 +9,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Moon, Sun } from "lucide-react";
+// import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { Wallet } from "./Wallet";
 import { ColourChangeIcon } from "./ColourChangeIcon";
+import { Web3Button, Web3NetworkSwitch } from "@web3modal/react";
 
 const links = [
   {
@@ -54,7 +53,8 @@ export function Navbar() {
 
         <div className="md:flex items-center space-x-4 hidden">
           <ColourChangeIcon />
-          <ConnectButton />
+          <Web3NetworkSwitch />
+          <Web3Button />
           {/* <Wallet /> */}
         </div>
         <div className="flex items-center space-x-4 md:hidden">
@@ -85,7 +85,8 @@ export function Navbar() {
                 <SheetTitle className="text-left">Programmatic NFTs</SheetTitle>
                 <SheetDescription>
                   <div>
-                    <ConnectButton />
+                    <Web3NetworkSwitch />
+                    <Web3Button />
                   </div>
                 </SheetDescription>
               </SheetHeader>

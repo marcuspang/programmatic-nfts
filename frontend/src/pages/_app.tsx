@@ -1,28 +1,34 @@
-import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
+import "./globals.css";
 
 import { Navbar } from "@/components/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "@/components/ui/toaster";
+import { isTestnet } from "@/lib/isTestnet";
 import { init } from "@airstack/airstack-react";
+import { Web3Modal } from "@web3modal/react";
+// import { RainbowKitProvider, getDefaultWallets } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  EthereumClient,
+  w3mConnectors,
+  w3mProvider,
+} from "@web3modal/ethereum";
 import type { Metadata } from "next";
 import type { AppProps } from "next/app";
 import { Inter } from "next/font/google";
 import {
+  goerli,
+  lineaTestnet,
+  mainnet,
   polygon,
   polygonMumbai,
   polygonZkEvm,
   polygonZkEvmTestnet,
-  goerli,
-  mainnet,
-  lineaTestnet,
 } from "viem/chains";
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
-import { publicProvider } from "wagmi/providers/public";
-import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { alchemyProvider } from "wagmi/providers/alchemy";
-import { Toaster } from "@/components/ui/toaster";
-import { isTestnet } from "@/lib/isTestnet";
+import { publicProvider } from "wagmi/providers/public";
 
 const { chains, publicClient } = configureChains(
   [
@@ -41,20 +47,25 @@ const { chains, publicClient } = configureChains(
         ? process.env.POLYGON_TESTNET_ALCHEMY_API_KEY!
         : process.env.POLYGON_ALCHEMY_API_KEY!,
     }),
+    w3mProvider({ projectId: process.env.WALLET_CONNECT_PROJECT_ID! }),
   ]
 );
 
-const { connectors } = getDefaultWallets({
-  appName: "Programmatic NFTs",
-  projectId: process.env.WALLET_CONNECT_PROJECT_ID!,
-  chains,
-});
+// const { connectors } = getDefaultWallets({
+//   appName: "Programmatic NFTs",
+//   projectId: process.env.WALLET_CONNECT_PROJECT_ID!,
+//   chains,
+// });
 
 const config = createConfig({
   publicClient,
-  connectors,
+  connectors: w3mConnectors({
+    projectId: process.env.WALLET_CONNECT_PROJECT_ID!,
+    chains,
+  }),
   autoConnect: true,
 });
+const ethereumClient = new EthereumClient(config, chains);
 
 const queryClient = new QueryClient();
 
@@ -72,14 +83,16 @@ export default function App({ Component, pageProps }: AppProps) {
     <div className={inter.className}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <WagmiConfig config={config}>
-          <RainbowKitProvider chains={chains}>
-            <QueryClientProvider client={queryClient}>
-              <Navbar />
-              <Toaster />
-              <Component {...pageProps} />
-            </QueryClientProvider>
-          </RainbowKitProvider>
+          <QueryClientProvider client={queryClient}>
+            <Navbar />
+            <Toaster />
+            <Component {...pageProps} />
+          </QueryClientProvider>
         </WagmiConfig>
+        <Web3Modal
+          projectId={process.env.WALLET_CONNECT_PROJECT_ID!}
+          ethereumClient={ethereumClient}
+        />
       </ThemeProvider>
     </div>
   );
