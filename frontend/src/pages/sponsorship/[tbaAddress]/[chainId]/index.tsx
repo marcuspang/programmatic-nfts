@@ -16,6 +16,7 @@ import {
   usePrepareAccountSponsorableSetIsSponsorable,
 } from "@/lib/generated";
 import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -155,10 +156,15 @@ export default function SponsorshipPage() {
         </Button>
         <Link href={`/sponsorship/${tbaAddress}/${chainId}/chat`}>
           <Button
-            className="block mt-6 bg-purple-700 text-lg dark:bg-purple-500 hover:bg-purple-600"
+            className="block mt-6 bg-purple-700 text-lg dark:bg-purple-500 hover:bg-purple-600 mb-2"
             size="lg"
           >
             Chat (powered by Push)
+          </Button>
+        </Link>
+        <Link href={`/sponsor/${tbaAddress}/${chainId}/`}>
+          <Button size={"lg"} className="text-lg">
+            Sponsor this TBA! <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         </Link>
         <SponsorshipTables tbaAddress={tbaAddress?.toString()} />
