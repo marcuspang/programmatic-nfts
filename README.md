@@ -1,5 +1,7 @@
 # Programmatic NFTs
 
+https://www.youtube.com/watch?v=G7Z5iNDtcs8
+
 ## Description
 
 Built for ETHParis 2023. 
