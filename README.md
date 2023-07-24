@@ -4,7 +4,7 @@ https://www.youtube.com/watch?v=G7Z5iNDtcs8
 
 ## Description
 
-Built for ETHParis 2023. 
+Built in 36 hours for ETHParis 2023!
 
 This projects aims to bring sponsorships to NFT owners with almost no gas fees, get liquidity to your project without taking on any risk.
 
